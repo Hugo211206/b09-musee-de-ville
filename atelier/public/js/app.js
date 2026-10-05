@@ -1,6 +1,7 @@
 const form = document.querySelector('#chat-form');
 const status = document.querySelector('#status');
 const message = document.querySelector('#message');
+const messages = document.querySelector('#messages');
 const suggestions = document.querySelector('#suggestions');
 
 suggestions.addEventListener('click', (event) => {
@@ -16,5 +17,15 @@ suggestions.addEventListener('click', (event) => {
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
-  status.textContent = 'Interface prête.';
+  const texte = message.value.trim();
+  if (texte === '') {
+    status.textContent = 'Écrivez un message avant d’envoyer.';
+    message.focus();
+    return;
+  }
+  const ligne = document.createElement('li');
+  ligne.textContent = `Vous : ${texte}`;
+  messages.append(ligne);
+  message.value = '';
+  status.textContent = '';
 });
