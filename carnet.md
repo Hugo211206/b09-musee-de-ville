@@ -188,9 +188,9 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 
 | N° | Demande | Diff relu | Verdict et pourquoi |
 |---|---|---|---|
-| 1 | Étape 1 seulement : dans public/index.html, sous le formulaire, une liste ul#suggestions de trois boutons type="button", un par question. Aucun JS, aucun autre fichier. | `public/index.html` seul, +5 lignes : `ul#suggestions` après `</form>`, 3 `li > button type="button"` avec mes 3 questions mot pour mot. Rien de non demandé (pas de `onclick`, pas de style, pas d'autre fichier). `npm test` vert (9/9). | Accepté : c'est exactement l'étape 1, je sais expliquer chaque ligne. |
-| 2 | Étape 2 seulement : dans public/js/app.js, un clic sur un bouton de ul#suggestions copie son texte dans textarea#message (remplacement). Pas d'envoi, pas de statut, pas de focus. Aucun autre fichier. | `public/js/app.js` seul, +10 lignes : un seul écouteur `click` sur `#suggestions` (délégation avec `closest('button')`), `message.value = bouton.textContent.trim()`. Pas d'envoi, pas de statut, pas de `focus()`, pas d'`innerHTML`. Non demandé mais inoffensif : `.trim()` (retire les espaces autour du texte). `npm test` vert (9/9). | Accepté : fait ce que dit l'étape et rien de plus ; le `.trim()` est justifié car le texte du bouton pourrait contenir des espaces du HTML. |
-| 3 | Étape 3 seulement : dans public/js/app.js, après la copie, curseur dans textarea#message (fin du texte) et p#status dit exactement « Question copiée : modifiez-la ou envoyez-la. ». Aucun autre fichier. | `public/js/app.js` seul, +3 lignes dans l'écouteur de clic : `message.focus()`, `setSelectionRange(...)` pour placer le curseur en fin de texte, `status.textContent = 'Question copiée : modifiez-la ou envoyez-la.'`. Rien de non demandé. `npm test` vert (9/9). | Accepté : les 3 lignes correspondent aux 2 critères de l'étape, texte du statut exact. |
+| 1 | Étape 1 : 3 boutons de questions dans `index.html` | `index.html`, +5 lignes, rien en plus | Accepté : exactement ce que j'ai demandé |
+| 2 | Étape 2 : un clic copie la question dans le champ (`app.js`) | `app.js`, +10 lignes ; en plus : `.trim()` (inoffensif) | Accepté : fait l'étape, rien d'autre |
+| 3 | Étape 3 : curseur dans le champ + statut « Question copiée… » (`app.js`) | `app.js`, +3 lignes, rien en plus | Accepté : texte du statut exact |
 | 4 | | | |
 | 5 | | | |
 | 6 | | | |
