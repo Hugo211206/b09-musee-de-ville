@@ -8,9 +8,9 @@ Binôme : Mohand-Said
 Thème provisoire et public visé : Musée de ville / Visiteurs du musée
 
 Trois questions auxquelles l'assistant pourrait répondre :
-1.
-2.
-3.
+1. Horaires de visite
+2. Il y a des guides
+3. Tarifs (adultes, enfants, étudiants, etc)
 
 Rôles de départ et moments d'échange :
 
@@ -45,8 +45,23 @@ Pour chaque checkpoint : cochez la case quand toute la preuve de la fiche est r�
 
 - [ ] Validé
 - Preuve : `essais-n0/chatbot-v1.html` s'ouvre ; le prompt et la première réponse sont collés ci-dessous, en entier, sans donnée personnelle.
-- Mon prompt, tel quel :
+- Mon prompt, tel quel : Fais-moi un chatbot sur musée de ville, dans une seule page HTML que j'ouvre dans mon navigateur
 - La première réponse du chat (texte et code), telle quelle :
+Ton chatbot est prêt : chatbot-musee.html. Double-clique sur le fichier pour l'ouvrir dans ton navigateur. Il fonctionne sans connexion internet et sans clé d'API. Je ne l'ai pas ouvert moi-même dans un navigateur, donc fais un premier essai.
+
+Ce qu'il fait:
+
+Il répond aux questions sur un musée fictif, le « Musée de la Ville » :
+horaires, tarifs et exposition en cours
+collections et visites guidées
+accès et accessibilité
+café et boutique, audioguides
+règles de visite, durée de la visite et contact
+Il repère des mots-clés dans la question, sans tenir compte des accents ni des majuscules. « c'est combien l'entrée ? » donne donc les tarifs.
+Des boutons de suggestion permettent de poser une question en un clic.
+Il affiche « L'assistant écrit… » avant de répondre, et une réponse par défaut quand il ne comprend pas.
+Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, dans la balise <script>. Chaque sujet contient une liste de mots-clés (keys) et une réponse (answer). Tu peux changer les infos (nom, adresse, prix…) ou ajouter un sujet en copiant un bloc existant.
+
 - Trois lignes d'observation (ce que j'ai vu en utilisant la page) :
 - Difficulté qui reste :
 
