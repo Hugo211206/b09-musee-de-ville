@@ -193,7 +193,7 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 | 3 | Étape 3 : curseur dans le champ + statut « Question copiée… » (`app.js`) | `app.js`, +3 lignes, rien en plus | Accepté : texte du statut exact |
 | 4 | J1-08 : couper le mot long dans `#messages` à 360 px (`styles.css`) | `styles.css`, +1 ligne ; en plus : `word-break` (doublon inoffensif) | Accepté : dépassement 152 → 0 px |
 | 5 | J1-09 étape 1 : l'envoi ajoute « Vous : … », refuse le vide (`app.js`) | `app.js`, +12/−1 lignes, `textContent`, rien en plus | Accepté : salut ✔, 3 espaces refusés ✔, `<b>gras</b>` tel quel ✔, question + Envoyer ✔ |
-| 6 | | | |
+| 6 | J1-09 étape 2 : nouveau `brain.js` (`validateMessage`, `replyTo`) + `server/app.js` | `brain.js` nouveau (24 lignes, sans `document`) ; `server/app.js` +2 lignes (FICHIERS, TYPES) ; rien en plus | Accepté : « SALUT » ✔, « tester » → repli ✔, espaces refusés ✔, `/js/brain.js` servi ✔, `npm test` vert |
 | 7 | | | |
 | 8 | | | |
 | 9 | | | |
