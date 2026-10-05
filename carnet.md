@@ -106,19 +106,60 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 
 - [ ] Validé
 - Preuve (`dsh --version`, mode Read Only, modèle `capweb-ia`, `git status -- atelier` propre ; **jamais la clé**) :
-- La consigne exacte envoyée à l'agent et sa réponse :
+- La consigne exacte envoyée à l'agent et sa réponse : Liste les fichiers de ce dossier et dis ce que fait chacun. Donne le chemin de chaque fichier. Si tu ne sais pas ce que fait un fichier, écris « je ne sais pas ». N'écris rien et ne modifie rien.
+
 - Pour chaque fichier cité : existe ou non, description juste ou fausse, pourquoi ; et un fichier qu'il n'a pas cité :
+| Fichier | Existe ? | Description | Pourquoi |
+  |---|---|---|---|
+  | `.gitignore` | existe | juste | les 6 dossiers listés sont bien ceux du fichier |
+  | `README.md` | existe | juste | parle bien de `npm start`, `npm test`, `npm run verify` et de la suite |
+  | `eslint.config.js` | existe | juste mais incomplète | oublie la règle `no-undef` (5 règles, pas 4) |
+  | `package.json` | existe | juste | nom, 5 scripts et 3 devDependencies exacts |
+  | `package-lock.json` | existe | juste | 1044 lignes, `lockfileVersion: 3` |
+  | `playwright.config.js` | existe | juste | Chromium headless, port 4173, `./browser`, `node server/start.js` |
+  | `browser/depart.spec.js` | existe | juste | vérifie le titre h1 « Cap Web », le `role=status` et l'absence d'erreur JS |
+  | `public/index.html` | existe | juste | h1, paragraphe, `p#status`, liens vers `styles.css` et `js/app.js` |
+  | `public/styles.css` | existe | juste | `system-ui`, marge, couleur, `main` à 48rem |
+  | `public/js/app.js` | existe | juste | une seule ligne qui écrit le message dans `#status` |
+  | `server/app.js` | existe | juste | liste fixe de chemins + `/version.json`, GET/HEAD seulement, 404/405 |
+  | `server/start.js` | existe | juste | port 3000 par défaut, 127.0.0.1, arrêt sur SIGINT/SIGTERM |
+  | `tests/server.test.js` | existe | juste | 9 tests `node:test`, on les compte bien |
+
 - Difficulté qui reste :
 
 ### J1-06 · 🧱 Anatomie d'un prompt — [fiche](checkpoints/J1-06-anatomie-dun-prompt.md)
 
 - [ ] Validé
-- Preuve (deux prompts, deux résultats, grille remplie, commit du squelette) :
+- Preuve (deux prompts, deux résultats, grille remplie, commit du squelette) : prompt structuré → `git status -- atelier` ne montre que `public/index.html`, `public/styles.css`, `public/js/app.js` modifiés, aucun fichier nouveau ; `npm test` vert (9/9) ; commit : ✏️ À COMPLÉTER (`git log --oneline`).
 - Prompt vague et ce que montre la page (trois lignes, fichiers touchés) :
+Écris la page de Cap Web : un formulaire, une liste de messages et un statut.
+
 - Prompt structuré, en six parties, tel qu'envoyé :
+
+  RÔLE : Tu es développeur web. Tu écris du HTML, du CSS et du JavaScript sans bibliothèque, pour des débutants.
+  TÂCHE : Écris le squelette de la page de « Cap Web », un assistant sur un musée de ville, pour les visiteurs du musée : un formulaire, une liste de messages, une ligne de statut.
+  CONTRAINTES :
+  - Modifie uniquement public/index.html, public/styles.css et public/js/app.js. Le serveur ne sert que ces trois fichiers : n'en crée aucun autre.
+  - Garde ces identifiants : form#chat-form, textarea#message, ul#messages, p#status.
+  - Le champ #message est limité à 100 caractères (maxlength).
+  - Le contenu de la page est dans un main. Un seul h1 (« Cap Web »), un label lié au champ, un bouton « Envoyer », p#status avec role="status", html lang="fr". Aucune bibliothèque, aucune adresse https://.
+  FORMAT DE SORTIE : d'abord la liste de tes hypothèses (cinq au plus), puis tu t'arrêtes. Après mon « ok », tu écris les trois fichiers, puis tu réponds par la liste des fichiers écrits.
+  EXEMPLES ET CONTRE-EXEMPLES : voulu : <button type="submit">Envoyer</button>. Refusé : <div onclick="envoyer()">Envoyer</div> (ce n'est pas un bouton) ; un fichier script.js à côté de app.js (le serveur répondrait 404).
+  CRITÈRE D'ARRÊT : app.js empêche seulement le rechargement de la page à l'envoi et écrit alors « Interface prête. » dans le statut ; il n'ajoute aucun message à la liste. Quand les trois fichiers sont écrits, tu t'arrêtes.
+
+  Résultat : formulaire `#chat-form` avec label, `textarea#message` (maxlength 100), bouton « Envoyer » de type submit, `ul#messages` vide, `p#status` avec `role="status"`, le tout dans un `main` sous un seul h1 « Cap Web ». À l'envoi, `app.js` empêche le rechargement et écrit « Interface prête. » sans rien ajouter à la liste.
 - Les hypothèses de l'agent, et ma réponse :
 - La grille (✔ ou ✘ et un mot, pour « vague » puis « structuré ») :
-- Une phrase : entre les deux résultats, ce qui a le plus changé, c'est… parce que la partie… de mon prompt disait…
+
+  | Critère | Prompt vague | Prompt structuré |
+  |---|---|---|
+  | La page s'affiche sans erreur (F12, onglet Console) | | |
+  | Formulaire, liste et statut sont là, avec les quatre identifiants | | (les 4 identifiants sont dans le HTML) |
+  | Seuls les trois fichiers autorisés ont changé (`git status -- atelier`) | (seul `index.html` modifié) | (les 3 fichiers, aucun nouveau) |
+  | `npm test` reste vert | | (9/9) |
+  | Aucune bibliothèque, aucune adresse `https://` | | (aucune trouvée) |
+  | Vous savez expliquer chaque partie de la page en une phrase | | |
+- Une phrase :
 - Difficulté qui reste :
 
 ### J1-07 · 👣 Petits pas — [fiche](checkpoints/J1-07-petits-pas.md)

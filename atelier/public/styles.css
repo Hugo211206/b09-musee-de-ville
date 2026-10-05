@@ -1,2 +1,6 @@
 body { font-family: system-ui, sans-serif; margin: 2rem; color: #15213a; background: white; }
 main { max-width: 48rem; margin-inline: auto; }
+#chat-form { display: grid; gap: 0.5rem; margin-block: 1rem; }
+#message { width: 100%; min-height: 4rem; font: inherit; }
+#messages { list-style: none; padding: 0; margin-block: 1rem; }
+#status { min-height: 1.5em; }
