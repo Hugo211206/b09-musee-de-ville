@@ -197,7 +197,7 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 | 7 | J1-09 étape 3 : brancher `brain.js` dans `app.js`, ligne « Cap Web : … » | `app.js`, +11/−6 lignes : import, `validateMessage`, 2e ligne avec `replyTo` ; rien en plus | Accepté : salut, BONJOUR, aide, test, phrase inconnue (repli) ✔, espaces refusés ✔, `<b>gras</b>` tel quel ✔ |
 | 8 | J1-09 étape 4 : mes mots « horaires », « tarifs » et la limite 100 (`brain.js`) | `brain.js`, +11 lignes : constante `LONGUEUR_MAX = 100`, 2 réponses ; rien en plus | Accepté : « HORAIRES » ✔, « horaires du musée » → repli ✔, 100 → `true`, 101 → `false` (l'erreur cite 100) ✔ |
 | 9 | J1-09 étape 5 (avec `/plan`) : nouveau `view.js` (`renderMessages`), `historique` dans `app.js`, `server/app.js` | `view.js` nouveau (15 lignes) ; `app.js` +7/−6 (plus de `createElement`) ; `server/app.js` +2 ; rien en plus | Accepté : plan corrigé avant accord (`replaceChildren` au lieu d'`innerHTML`, rôle inconnu non affiché) ; même comportement qu'avant ✔, `/js/view.js` servi ✔ |
-| 10 | | | |
+| 10 | J1-09 étape 6 : mémoire `capweb.historique` + bouton « Effacer » (`app.js`, `index.html`) | `index.html` +1 (bouton `#effacer`) ; `app.js` +29 (lecture dans `try/catch`, enregistrement, Effacer avec `confirm`) ; rien en plus | Accepté : F5 garde ✔, `{pas du json` → vide + statut ✔, Annuler garde ✔, OK vide même après F5 ✔ |
 
 ### J1-08 · 🔎 Revue de la page — [fiche](checkpoints/J1-08-revue-de-la-page.md)
 
@@ -237,14 +237,14 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 ### J1-09 · 🧠 Un cerveau à règles, par prompts — [fiche](checkpoints/J1-09-cerveau-a-regles.md)
 
 - [ ] Validé
-- Preuve (comportements vérifiés : « Vous : … », message vide, `<b>gras</b>`, mes deux mots, ma limite ; `/js/brain.js` et `/js/view.js` affichés ; F5 ; « Effacer ») :
-- Mes six demandes et leurs verdicts : dans le journal des décisions ci-dessus.
+- Preuve (comportements vérifiés : « Vous : … », message vide, `<b>gras</b>`, mes deux mots, ma limite ; `/js/brain.js` et `/js/view.js` affichés ; F5 ; « Effacer ») : tout vérifié ✔ ; limite : `validateMessage('a'.repeat(100)).ok` → `true`, avec 101 → `false` ; `npm test` vert (9/9).
+- Mes six demandes et leurs verdicts : dans le journal des décisions ci-dessus (lignes 5 à 10).
 - Le rôle de chaque fichier, en une phrase chacun :
-  - `app.js` :
-  - `brain.js` :
-  - `view.js` :
-- Ce que j'ai vu quand j'ai mis `{pas du json` dans la mémoire :
-- Difficulté qui reste :
+  - `app.js` : il relie la page au reste, en gérant l'envoi, les boutons de questions, le tableau `historique`, la mémoire et le bouton « Effacer ».
+  - `brain.js` : c'est le cerveau, qui vérifie le message (`validateMessage`) et choisit la réponse (`replyTo`), sans jamais toucher à la page.
+  - `view.js` : il affiche la conversation (`renderMessages`), un `li` par message, en texte seulement.
+- Ce que j'ai vu quand j'ai mis `{pas du json` dans la mémoire : la page n'a pas planté, la conversation est repartie vide et le statut a affiché « Historique illisible : conversation réinitialisée. »
+- Difficulté qui reste : mes deux mots (« horaires », « tarifs ») et la limite 100 ne viennent pas du formateur : à lui faire confirmer.
 
 ### J1-10 · 🧪 Épreuve de l'explication — [fiche](checkpoints/J1-10-epreuve-explication.md)
 
