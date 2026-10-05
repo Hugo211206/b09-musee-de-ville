@@ -191,7 +191,7 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 | 1 | Étape 1 : 3 boutons de questions dans `index.html` | `index.html`, +5 lignes, rien en plus | Accepté : exactement ce que j'ai demandé |
 | 2 | Étape 2 : un clic copie la question dans le champ (`app.js`) | `app.js`, +10 lignes ; en plus : `.trim()` (inoffensif) | Accepté : fait l'étape, rien d'autre |
 | 3 | Étape 3 : curseur dans le champ + statut « Question copiée… » (`app.js`) | `app.js`, +3 lignes, rien en plus | Accepté : texte du statut exact |
-| 4 | | | |
+| 4 | J1-08 : couper le mot long dans `#messages` à 360 px (`styles.css`) | `styles.css`, +1 ligne ; en plus : `word-break` (doublon inoffensif) | Accepté : dépassement 152 → 0 px |
 | 5 | | | |
 | 6 | | | |
 | 7 | | | |
@@ -202,17 +202,36 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 ### J1-08 · 🔎 Revue de la page — [fiche](checkpoints/J1-08-revue-de-la-page.md)
 
 - [ ] Validé
-- Preuve (trois défauts, un corrigé avec son avant et son après, diff relu, revue adverse vérifiée) :
+- Preuve (trois défauts, un corrigé avec son avant et son après, diff relu, revue adverse vérifiée) : 3 défauts ci-dessous ; mot long corrigé (152 → 0 px) ; diff relu (1 fichier, 1 ligne) ; revue adverse : 1 vraie, 1 « je ne sais pas », 1 vraie en partie.
 - Mes défauts, un par ligne :
 
   | Lentille (structure, clavier, écrans) | Où (élément ou fichier) | Comment je l'ai vu |
   |---|---|---|
-  | | | |
-  | | | |
-  | | | |
+  | Écrans | `#messages li`, `styles.css` (aucune règle pour couper les mots) | À 360 px, un `<li>` « Vous : » + 60 « a » dépasse : mesure = **152 px**. 0 à 600 et 1280 px. |
+  | Structure | `ul#suggestions` et `ul#messages` (`index.html:18` et `:23`) | Ni `aria-label` ni titre : les deux listes n'ont pas de nom |
+  | Structure | `index.html` | Pas de `header` ni de `footer` : seul `main` existe |
+
+  Clavier sans défaut : Tab va dans l'ordre champ → Envoyer → 3 questions, contour visible partout ; Espace sur une question la copie sans envoyer ; Entrée sur Envoyer affiche « Interface prête. », sans `?message=` dans l'adresse. Étiquette liée au champ, un seul `h1`, `lang`, `title`, `viewport` présents.
+  (Mesures faites avec Chrome sans fenêtre, en simulant un écran de 360 px.)
 
 - La revue adverse : trois affirmations de l'agent, la référence qu'il a donnée (fichier, ligne), mon verdict (vrai, faux, rejeté sans référence) et comment j'ai vérifié :
+  1. Structure, `index.html` l. 11 et 18-24 : un seul titre, listes sans nom → **vrai** (aucun `aria-label`, aucun `h2` : vu dans le HTML).
+  2. Clavier, `index.html` l. 13-22, `styles.css` l. 1-6 : « je ne sais pas » → **rien à vérifier** ; mon test confirme qu'il n'y a pas de défaut clavier.
+  3. Écrans, `styles.css` l. 4 : `#message` en `width: 100%` sans `box-sizing` dépasse → **vrai en partie** : le champ dépasse du formulaire de 6 px, à 360 comme à 1280 px, mais la page ne défile pas (mesure = 0). Le « risque de défilement horizontal » est faux.
 - Le défaut corrigé : l'avant (capture ou valeur), ma demande ciblée (copiée), le diff relu (fichiers, lignes, changement non demandé ?), l'après (même geste, même mesure) :
+  - Défaut : le mot de 60 lettres dans `#messages` à 360 px.
+  - Avant : **152 px** de dépassement → Après : **0 px** (même mesure, à 360 px ; toujours 0 à 600 et 1280 px).
+  - Ma demande :
+
+    ```text
+    RÔLE : tu es développeur web, tu corriges du CSS pour des débutants.
+    TÂCHE : à 360 px de large, un message contenant un mot très long (60 lettres) dans ul#messages dépasse de l'écran : la page défile horizontalement de 152 px. Corrige ce seul défaut.
+    CONTRAINTES : ne modifie que public/styles.css. Pas d'overflow: hidden sur html ou body. Ne touche pas aux autres règles.
+    FORMAT DE SORTIE : le diff, puis une phrase sur la façon de vérifier.
+    CONTRE-EXEMPLE : ce qu'on ne veut plus voir : une ligne « Vous : aaaa… » qui sort de l'écran à droite.
+    CRITÈRE D'ARRÊT : quand ce seul défaut est corrigé, tu t'arrêtes.
+    ```
+  - Diff relu : `styles.css` seul, +1 ligne : `#messages li { overflow-wrap: break-word; word-break: break-word; }`. Pas d'`overflow: hidden`, aucune autre règle touchée. `word-break: break-word` fait doublon avec `overflow-wrap` (ancienne écriture), mais ne change rien d'autre : accepté.
 - Difficulté qui reste :
 
 ### J1-09 · 🧠 Un cerveau à règles, par prompts — [fiche](checkpoints/J1-09-cerveau-a-regles.md)
