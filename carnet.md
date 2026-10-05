@@ -195,7 +195,7 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 | 5 | J1-09 étape 1 : l'envoi ajoute « Vous : … », refuse le vide (`app.js`) | `app.js`, +12/−1 lignes, `textContent`, rien en plus | Accepté : salut ✔, 3 espaces refusés ✔, `<b>gras</b>` tel quel ✔, question + Envoyer ✔ |
 | 6 | J1-09 étape 2 : nouveau `brain.js` (`validateMessage`, `replyTo`) + `server/app.js` | `brain.js` nouveau (24 lignes, sans `document`) ; `server/app.js` +2 lignes (FICHIERS, TYPES) ; rien en plus | Accepté : « SALUT » ✔, « tester » → repli ✔, espaces refusés ✔, `/js/brain.js` servi ✔, `npm test` vert |
 | 7 | J1-09 étape 3 : brancher `brain.js` dans `app.js`, ligne « Cap Web : … » | `app.js`, +11/−6 lignes : import, `validateMessage`, 2e ligne avec `replyTo` ; rien en plus | Accepté : salut, BONJOUR, aide, test, phrase inconnue (repli) ✔, espaces refusés ✔, `<b>gras</b>` tel quel ✔ |
-| 8 | | | |
+| 8 | J1-09 étape 4 : mes mots « horaires », « tarifs » et la limite 100 (`brain.js`) | `brain.js`, +11 lignes : constante `LONGUEUR_MAX = 100`, 2 réponses ; rien en plus | Accepté : « HORAIRES » ✔, « horaires du musée » → repli ✔, 100 → `true`, 101 → `false` (l'erreur cite 100) ✔ |
 | 9 | | | |
 | 10 | | | |
 
