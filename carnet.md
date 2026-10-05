@@ -165,19 +165,32 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 ### J1-07 · 👣 Petits pas — [fiche](checkpoints/J1-07-petits-pas.md)
 
 - [ ] Validé
-- Preuve (découpage écrit avant la première demande, trois diffs relus, un refus écrit, un commit par étape acceptée, trois boutons de questions qui fonctionnent) :
+- Preuve (découpage écrit avant la première demande, trois diffs relus, un refus écrit, un commit par étape acceptée, trois boutons de questions qui fonctionnent) : commits `343b2c3` (étape 1), `6b76314` (étape 2), `9822834` (étape 3) ; `git status -- atelier` propre ; `npm test` vert (9/9) ; diffs relus et refus : voir le journal des décisions ci-dessous.
 - La tâche, mes trois questions et mon découpage en trois étapes (écrit avant la première demande d'écriture) :
-- Ce que l'agent a proposé comme découpage, ce que j'ai gardé, pourquoi :
+  - Tâche : afficher sous le formulaire mes trois questions en boutons ; un clic sur un bouton copie la question dans le champ #message, sans l'envoyer.
+  - Mes trois questions (celles de J1-01, reformulées en vraies questions, sans le mot « Envoyer ») :
+    1. Quels sont les horaires de visite ?
+    2. Y a-t-il des visites guidées ?
+    3. Quels sont les tarifs (adultes, enfants, étudiants) ?
+  - Découpage :
+    1. Dans `public/index.html` seulement : une liste `ul#suggestions` de trois boutons `type="button"`, un par question, écrits dans le HTML. Test : F5, les trois boutons s'affichent et ne font rien.
+    2. Dans `public/js/app.js` seulement : un clic sur un bouton copie son texte dans `#message`. Test : clic → le texte arrive dans le champ, le statut ne change pas (rien n'est envoyé).
+    3. Dans `public/js/app.js` seulement : après le clic, le curseur est dans le champ et le statut dit « Question copiée : modifiez-la ou envoyez-la. » Test : clic → curseur dans le champ, message dans le statut.
+- Ce que l'agent a proposé comme découpage, ce que j'ai gardé, pourquoi : l'agent garde mon découpage en 3 ; il propose aussi en option 2 étapes (HTML, puis tout le JS d'un coup : copie + focus + statut). Je garde mes 3 étapes : des diffs plus petits se relisent mieux, et l'étape 3 rend le critère « curseur + statut » vérifiable à part. Ses hypothèses étaient justes (boutons placés après `</form>` et avant `#messages`, `type="button"` pour ne pas envoyer, copie = remplacement du texte du champ, « Interface prête. » conservé) ; il signalait qu'il ne connaissait pas mes questions : je les lui donne dans la demande de l'étape 1. Elles font toutes moins de 100 caractères (limite `maxlength`).
 - Mon refus écrit : ce que l'agent avait fait, pourquoi je le refuse, ce que j'ai demandé à la place :
+  - Mon refus porte sur une **proposition**, pas sur un diff : les trois diffs faisaient exactement ce que je demandais. À la fin de l'étape 3, j'ai demandé à l'agent : « Liste, sans les faire, les changements que tu aurais ajoutés en plus de ces trois étapes. N'écris rien. »
+  - Ce que l'agent proposait : ajouter dans `app.js` une « garde » qui ne fait rien si `#suggestions` ou `#message` sont absents de la page, « pour éviter une erreur si le HTML change ».
+  - Pourquoi je refuse : ce n'était pas demandé, et cela cacherait un vrai problème. Si un jour `ul#suggestions` disparaît du HTML, je préfère voir une erreur rouge dans la console (F12) qui me dit ce qui manque, plutôt que des boutons qui ne font plus rien sans aucun message.
+  - Ce que j'ai demandé à la place : ne rien ajouter, garder `app.js` tel qu'il est après l'étape 3.
 - Difficulté qui reste :
 
 **Journal des décisions.** Une ligne par demande faite à l'agent, de J1-07 à J1-09 (les trois étapes de J1-07, puis la correction de J1-08, puis les six demandes de J1-09) : la demande copiée, le diff relu (fichiers, nombre de lignes, une chose que je n'avais pas demandée ?), le verdict et pourquoi.
 
 | N° | Demande | Diff relu | Verdict et pourquoi |
 |---|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
+| 1 | Étape 1 seulement : dans public/index.html, sous le formulaire, une liste ul#suggestions de trois boutons type="button", un par question. Aucun JS, aucun autre fichier. | `public/index.html` seul, +5 lignes : `ul#suggestions` après `</form>`, 3 `li > button type="button"` avec mes 3 questions mot pour mot. Rien de non demandé (pas de `onclick`, pas de style, pas d'autre fichier). `npm test` vert (9/9). | Accepté : c'est exactement l'étape 1, je sais expliquer chaque ligne. |
+| 2 | Étape 2 seulement : dans public/js/app.js, un clic sur un bouton de ul#suggestions copie son texte dans textarea#message (remplacement). Pas d'envoi, pas de statut, pas de focus. Aucun autre fichier. | `public/js/app.js` seul, +10 lignes : un seul écouteur `click` sur `#suggestions` (délégation avec `closest('button')`), `message.value = bouton.textContent.trim()`. Pas d'envoi, pas de statut, pas de `focus()`, pas d'`innerHTML`. Non demandé mais inoffensif : `.trim()` (retire les espaces autour du texte). `npm test` vert (9/9). | Accepté : fait ce que dit l'étape et rien de plus ; le `.trim()` est justifié car le texte du bouton pourrait contenir des espaces du HTML. |
+| 3 | Étape 3 seulement : dans public/js/app.js, après la copie, curseur dans textarea#message (fin du texte) et p#status dit exactement « Question copiée : modifiez-la ou envoyez-la. ». Aucun autre fichier. | `public/js/app.js` seul, +3 lignes dans l'écouteur de clic : `message.focus()`, `setSelectionRange(...)` pour placer le curseur en fin de texte, `status.textContent = 'Question copiée : modifiez-la ou envoyez-la.'`. Rien de non demandé. `npm test` vert (9/9). | Accepté : les 3 lignes correspondent aux 2 critères de l'étape, texte du statut exact. |
 | 4 | | | |
 | 5 | | | |
 | 6 | | | |
