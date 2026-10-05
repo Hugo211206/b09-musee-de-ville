@@ -18,9 +18,9 @@ Rôles de départ et moments d'échange :
 
 Recopiez les valeurs telles que le formateur vous les a remises. Ne les changez pas, ne les échangez pas avec un autre binôme.
 
-- Limite de caractères d'un message (le nombre N) :
-- Premier mot reconnu, en plus de « salut », « aide » et « test » :
-- Second mot reconnu :
+- Limite de caractères d'un message (le nombre N) : 100
+- Premier mot reconnu, en plus de « salut », « aide » et « test » : horaires
+- Second mot reconnu : tarifs
 
 ## Commandes essayées
 
@@ -192,7 +192,7 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 | 2 | Étape 2 : un clic copie la question dans le champ (`app.js`) | `app.js`, +10 lignes ; en plus : `.trim()` (inoffensif) | Accepté : fait l'étape, rien d'autre |
 | 3 | Étape 3 : curseur dans le champ + statut « Question copiée… » (`app.js`) | `app.js`, +3 lignes, rien en plus | Accepté : texte du statut exact |
 | 4 | J1-08 : couper le mot long dans `#messages` à 360 px (`styles.css`) | `styles.css`, +1 ligne ; en plus : `word-break` (doublon inoffensif) | Accepté : dépassement 152 → 0 px |
-| 5 | | | |
+| 5 | J1-09 étape 1 : l'envoi ajoute « Vous : … », refuse le vide (`app.js`) | `app.js`, +12/−1 lignes, `textContent`, rien en plus | Accepté : salut ✔, 3 espaces refusés ✔, `<b>gras</b>` tel quel ✔, question + Envoyer ✔ |
 | 6 | | | |
 | 7 | | | |
 | 8 | | | |
