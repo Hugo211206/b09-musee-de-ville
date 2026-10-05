@@ -1,3 +1,5 @@
+import { validateMessage, replyTo } from './brain.js';
+
 const form = document.querySelector('#chat-form');
 const status = document.querySelector('#status');
 const message = document.querySelector('#message');
@@ -17,15 +19,18 @@ suggestions.addEventListener('click', (event) => {
 
 form.addEventListener('submit', (event) => {
   event.preventDefault();
-  const texte = message.value.trim();
-  if (texte === '') {
-    status.textContent = 'Écrivez un message avant d’envoyer.';
+  const resultat = validateMessage(message.value);
+  if (!resultat.ok) {
+    status.textContent = resultat.error;
     message.focus();
     return;
   }
-  const ligne = document.createElement('li');
-  ligne.textContent = `Vous : ${texte}`;
-  messages.append(ligne);
+  const ligneVous = document.createElement('li');
+  ligneVous.textContent = `Vous : ${resultat.value}`;
+  messages.append(ligneVous);
+  const ligneCapWeb = document.createElement('li');
+  ligneCapWeb.textContent = `Cap Web : ${replyTo(resultat.value)}`;
+  messages.append(ligneCapWeb);
   message.value = '';
   status.textContent = '';
 });
