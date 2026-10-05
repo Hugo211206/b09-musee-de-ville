@@ -196,7 +196,7 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 | 6 | J1-09 étape 2 : nouveau `brain.js` (`validateMessage`, `replyTo`) + `server/app.js` | `brain.js` nouveau (24 lignes, sans `document`) ; `server/app.js` +2 lignes (FICHIERS, TYPES) ; rien en plus | Accepté : « SALUT » ✔, « tester » → repli ✔, espaces refusés ✔, `/js/brain.js` servi ✔, `npm test` vert |
 | 7 | J1-09 étape 3 : brancher `brain.js` dans `app.js`, ligne « Cap Web : … » | `app.js`, +11/−6 lignes : import, `validateMessage`, 2e ligne avec `replyTo` ; rien en plus | Accepté : salut, BONJOUR, aide, test, phrase inconnue (repli) ✔, espaces refusés ✔, `<b>gras</b>` tel quel ✔ |
 | 8 | J1-09 étape 4 : mes mots « horaires », « tarifs » et la limite 100 (`brain.js`) | `brain.js`, +11 lignes : constante `LONGUEUR_MAX = 100`, 2 réponses ; rien en plus | Accepté : « HORAIRES » ✔, « horaires du musée » → repli ✔, 100 → `true`, 101 → `false` (l'erreur cite 100) ✔ |
-| 9 | | | |
+| 9 | J1-09 étape 5 (avec `/plan`) : nouveau `view.js` (`renderMessages`), `historique` dans `app.js`, `server/app.js` | `view.js` nouveau (15 lignes) ; `app.js` +7/−6 (plus de `createElement`) ; `server/app.js` +2 ; rien en plus | Accepté : plan corrigé avant accord (`replaceChildren` au lieu d'`innerHTML`, rôle inconnu non affiché) ; même comportement qu'avant ✔, `/js/view.js` servi ✔ |
 | 10 | | | |
 
 ### J1-08 · 🔎 Revue de la page — [fiche](checkpoints/J1-08-revue-de-la-page.md)
