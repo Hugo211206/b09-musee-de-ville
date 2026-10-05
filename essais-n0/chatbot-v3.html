@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Musée de la Ville — Assistant</title>
+<style>
+  :root {
+    --bg: #f4efe6;
+    --panel: #fffdf8;
+    --ink: #2b2420;
+    --muted: #7a6e64;
+    --accent: #8c2f39;
+    --accent-soft: #f3e1e3;
+    --line: #e4dbcf;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  .chat {
+    width: 100%;
+    max-width: 640px;
+    height: min(760px, calc(100vh - 32px));
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(60, 40, 20, .08);
+  }
+  header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .logo {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: grid; place-items: center;
+    font-size: 22px;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; }
+  header p { margin: 2px 0 0; font-size: .85rem; color: var(--muted); font-family: system-ui, sans-serif; }
+  .new-chat {
+    margin-left: auto;
+    flex-shrink: 0;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: system-ui, sans-serif;
+    font-size: .82rem;
+    cursor: pointer;
+  }
+  .new-chat:hover { background: var(--accent-soft); }
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: .95rem;
+    line-height: 1.45;
+  }
+  .msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    white-space: pre-line;
+  }
+  .bot { background: var(--accent-soft); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .user { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .typing { color: var(--muted); font-style: italic; }
+  .suggestions {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 0 20px 12px;
+    font-family: system-ui, sans-serif;
+  }
+  .suggestions button {
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: .82rem;
+    cursor: pointer;
+  }
+  .suggestions button:hover { background: var(--accent-soft); }
+  form {
+    display: flex; gap: 8px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--line);
+  }
+  input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 1rem;
+    background: #fff;
+    color: var(--ink);
+  }
+  input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  form button {
+    padding: 0 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="chat">
+    <header>
+      <div class="logo">🏛️</div>
+      <div>
+        <h1>Musée de la Ville</h1>
+        <p>Assistant virtuel · horaires, tarifs, expositions…</p>
+      </div>
+      <button type="button" id="new-chat" class="new-chat">＋ Nouveau chat</button>
+    </header>
+
+    <div id="messages"></div>
+
+    <div class="suggestions" id="suggestions"></div>
+
+    <form id="form">
+      <input id="input" type="text" placeholder="Posez votre question…" autocomplete="off">
+      <button type="submit">Envoyer</button>
+    </form>
+  </div>
+
+<script>
+  // Base de connaissances : chaque sujet a des mots-clés et une réponse.
+  const knowledge = [
+    {
+      keys: ["bonjour", "salut", "hello", "coucou", "bonsoir"],
+      answer: "Bonjour et bienvenue au Musée de la Ville ! 😊\nJe peux vous renseigner sur les horaires, les tarifs, les expositions, l'accès, les visites guidées et bien plus."
+    },
+    {
+      keys: ["horaire", "heure", "ouvert", "ouverture", "ferme", "fermeture", "quand", "jour"],
+      answer: "🕘 Horaires d'ouverture :\n• Mardi → dimanche : 10h – 18h\n• Nocturne le jeudi jusqu'à 21h\n• Fermé le lundi, le 1er janvier, le 1er mai et le 25 décembre\n\nDernière entrée 45 minutes avant la fermeture."
+    },
+    {
+      keys: ["tarif", "prix", "cout", "combien", "billet", "payer", "gratuit", "reduit", "entree"],
+      answer: "🎟️ Tarifs :\n• Plein tarif : 9 €\n• Tarif réduit (étudiants, +65 ans, demandeurs d'emploi) : 6 €\n• Gratuit : moins de 18 ans, habitants de la ville, personnes en situation de handicap et leur accompagnateur\n• Gratuit pour tous le 1er dimanche du mois\n\nBillets en vente à l'accueil (CB, espèces)."
+    },
+    {
+      keys: ["exposition", "expo", "temporaire", "actuellement", "moment", "nouveau"],
+      answer: "🖼️ Exposition temporaire en cours :\n« La Ville en lumière – 150 ans de photographies urbaines »\nJusqu'au 12 janvier 2027, au 2e étage.\n\nProchainement : « Métiers d'autrefois », à partir de février 2027."
+    },
+    {
+      keys: ["collection", "permanent", "oeuvre", "voir", "salle", "histoire", "archeologie", "peinture", "tableau"],
+      answer: "🏺 Les collections permanentes :\n• Rez-de-chaussée : archéologie – les origines de la ville, de l'Antiquité au Moyen Âge\n• 1er étage : la ville à la Renaissance et à l'époque moderne (peintures, plans, maquettes)\n• 2e étage : la révolution industrielle et le XXe siècle\n\nNe manquez pas la grande maquette de la ville en 1850 !"
+    },
+    {
+      keys: ["guide", "visite", "groupe", "scolaire", "ecole", "classe", "conference", "atelier"],
+      answer: "👥 Visites guidées et ateliers :\n• Visite guidée tout public : samedi et dimanche à 15h (+3 € au billet)\n• Groupes (10 pers. min.) et scolaires : sur réservation, au moins 2 semaines à l'avance\n• Ateliers enfants (6–12 ans) : mercredis à 14h30\n\nRéservation : reservation@musee-ville.fr"
+    },
+    {
+      keys: ["acces", "adresse", "venir", "ou", "trouver", "bus", "tram", "metro", "parking", "voiture", "velo", "situe"],
+      answer: "📍 Adresse : 12 place de l'Hôtel de Ville\n• Tram ligne A, arrêt « Hôtel de Ville »\n• Bus 3 et 7, arrêt « Musée »\n• Parking payant « Centre » à 200 m\n• Arceaux vélos devant l'entrée"
+    },
+    {
+      keys: ["handicap", "fauteuil", "pmr", "accessible", "accessibilite", "ascenseur", "malvoyant", "sourd", "poussette"],
+      answer: "♿ Accessibilité :\n• Musée entièrement accessible en fauteuil (ascenseurs à chaque étage)\n• Fauteuils roulants et poussettes prêtés gratuitement à l'accueil\n• Audioguide en audiodescription et visites en LSF un samedi par mois"
+    },
+    {
+      keys: ["cafe", "restaurant", "manger", "boire", "boutique", "librairie", "souvenir", "cadeau"],
+      answer: "☕ Services :\n• Café du musée au rez-de-chaussée (10h – 17h30), avec terrasse sur la place\n• Boutique-librairie : catalogues, cartes postales, livres pour enfants et souvenirs"
+    },
+    {
+      keys: ["audioguide", "application", "langue", "anglais", "english"],
+      answer: "🎧 Audioguides disponibles à l'accueil (2 €) en français, anglais, espagnol et allemand.\nUne version enfant est aussi proposée."
+    },
+    {
+      keys: ["photo", "photographier", "filmer", "sac", "vestiaire", "consigne", "animal", "chien"],
+      answer: "📷 Règles de visite :\n• Photos sans flash autorisées (sauf mention contraire dans l'expo temporaire)\n• Vestiaire et consignes gratuits pour les sacs volumineux\n• Animaux non admis, sauf chiens d'assistance"
+    },
+    {
+      keys: ["evenement", "specia", "agenda", "programme", "soiree", "nuit", "concert", "festival", "fete", "animation", "patrimoine"],
+      answer: "🎉 Événements spéciaux à venir :\n• Nuit des musées : samedi 15 mai, ouverture gratuite jusqu'à minuit avec concerts et visites à la lampe torche\n• Journées européennes du patrimoine : 3e week-end de septembre, accès aux réserves du musée\n• Soirée « Jeudi au musée » : chaque premier jeudi du mois à 19h, conférence suivie d'un apéritif (5 €)\n• Fête de la ville : début juillet, ateliers en famille et spectacle sur le parvis\n\nProgramme complet à l'accueil ou sur demande : contact@musee-ville.fr"
+    },
+    {
+      keys: ["duree", "temps", "longtemps"],
+      answer: "⏱️ Comptez environ 1h30 pour les collections permanentes, et 45 minutes de plus pour l'exposition temporaire."
+    },
+    {
+      keys: ["contact", "telephone", "mail", "email", "joindre", "appeler"],
+      answer: "📞 Contact :\n• Téléphone : 01 23 45 67 89 (mardi – vendredi, 9h – 17h)\n• E-mail : contact@musee-ville.fr"
+    },
+    {
+      keys: ["merci", "super", "parfait", "genial", "top"],
+      answer: "Avec plaisir ! N'hésitez pas si vous avez d'autres questions. Bonne visite ! 🏛️"
+    },
+    {
+      keys: ["revoir", "bye", "ciao", "bientot"],
+      answer: "Au revoir et à bientôt au Musée de la Ville ! 👋"
+    }
+  ];
+
+  const fallback = "Je ne suis pas sûr d'avoir compris 🤔\nVous pouvez me demander par exemple : les horaires, les tarifs, l'exposition en cours, l'accès, les visites guidées, les événements spéciaux ou l'accessibilité.";
+
+  const suggestions = ["Horaires", "Tarifs", "Exposition en cours", "Comment venir ?", "Visites guidées", "Événements spéciaux", "Accessibilité"];
+
+  // Retire accents et majuscules pour comparer plus facilement.
+  function normalize(text) {
+    return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  // Choisit le sujet qui contient le plus de mots-clés présents dans la question.
+  function findAnswer(question) {
+    const words = normalize(question).split(/[^a-z0-9]+/).filter(Boolean);
+    let best = null, bestScore = 0;
+    for (const topic of knowledge) {
+      let score = 0;
+      for (const key of topic.keys) {
+        if (words.some(w => w === key || (key.length > 3 && w.startsWith(key)))) score++;
+      }
+      if (score > bestScore) { bestScore = score; best = topic; }
+    }
+    return best ? best.answer : fallback;
+  }
+
+  const messages = document.getElementById("messages");
+  const form = document.getElementById("form");
+  const input = document.getElementById("input");
+
+  function addMessage(text, who) {
+    const div = document.createElement("div");
+    div.className = "msg " + who;
+    div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return div;
+  }
+
+  // Réponses en attente, annulées si on démarre un nouveau chat.
+  const pending = [];
+
+  function ask(question) {
+    if (!question.trim()) return;
+    addMessage(question, "user");
+    const typing = addMessage("L'assistant écrit…", "bot typing");
+    pending.push(setTimeout(() => {
+      typing.remove();
+      addMessage(findAnswer(question), "bot");
+    }, 500));
+  }
+
+  function newChat() {
+    pending.forEach(clearTimeout);
+    pending.length = 0;
+    messages.innerHTML = "";
+    input.value = "";
+    addMessage("Bonjour ! Je suis l'assistant du Musée de la Ville 🏛️\nComment puis-je vous aider ?", "bot");
+    input.focus();
+  }
+
+  document.getElementById("new-chat").addEventListener("click", newChat);
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    ask(input.value);
+    input.value = "";
+    input.focus();
+  });
+
+  const box = document.getElementById("suggestions");
+  for (const s of suggestions) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = s;
+    btn.onclick = () => ask(s);
+    box.appendChild(btn);
+  }
+
+  newChat();
+</script>
+</body>
+</html>

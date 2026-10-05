@@ -69,10 +69,15 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 
 - [ ] Validé
 - Liste de contrôle de la version 1 (cinq à huit comportements essayés) :
+1. Ecrire un message
+2. Envoyer un message
+3. Le chatbot réponds sur le thème
+4. Choissir un catégorie
+5. Les messages restent sur le chat
 - Journal des régressions, une entrée par modification : ce que j'ai demandé · ce qui marche maintenant · ce qui marchait et ne marche plus · ce que je n'avais pas vu, et comment je l'ai trouvé.
-  - Modification 1 :
-  - Modification 2 :
-  - Modification 3 :
+  - Modification 1 : Ajouter boutton Evénements spéciaux
+  - Modification 2 : Ajouter boutton nouveau chat
+  - Modification 3 : Afficher historique des chats
 - Chasse à l'angle mort (ce qui a été trouvé, et par qui) :
 - Deux phrases de conclusion :
 - Difficulté qui reste :
