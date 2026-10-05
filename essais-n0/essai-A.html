@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assistant du Musée de la Ville</title>
+<style>
+  :root{
+    --bg:#f6f1e9; --card:#fffdf9; --ink:#2b2622; --muted:#7a6f64;
+    --accent:#9c3d2e; --accent-2:#c9a24a; --bot:#efe7da; --user:#9c3d2e;
+    --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1d1916; --card:#272220; --ink:#f1e9de; --muted:#a89c8f; --bot:#352e2a; --user:#b24b3a; }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    background:var(--bg); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .app{
+    width:100%; max-width:720px; height:min(88vh,820px);
+    background:var(--card); border-radius:24px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.18);
+    display:flex; flex-direction:column;
+  }
+  header{
+    padding:18px 22px; background:linear-gradient(135deg,var(--accent),#6d261b);
+    color:#fff; display:flex; align-items:center; gap:14px;
+    border-bottom:4px solid var(--accent-2);
+  }
+  .logo{
+    width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);
+    display:grid;place-items:center;font-size:24px;
+  }
+  header h1{font-size:19px;margin:0;font-weight:600;letter-spacing:.2px}
+  header p{margin:2px 0 0;font-size:13px;opacity:.85;font-family:system-ui,sans-serif}
+  #log{
+    flex:1; overflow-y:auto; padding:22px 18px; display:flex; flex-direction:column; gap:12px;
+    scroll-behavior:smooth;
+  }
+  .msg{
+    max-width:84%; padding:12px 16px; border-radius:var(--radius); line-height:1.5;
+    font-family:system-ui,-apple-system,sans-serif; font-size:15px;
+    animation:pop .25s ease-out;
+  }
+  .msg.bot{background:var(--bot); border-bottom-left-radius:6px; align-self:flex-start}
+  .msg.user{background:var(--user); color:#fff; border-bottom-right-radius:6px; align-self:flex-end}
+  .msg ul{margin:6px 0 0;padding-left:20px}
+  .msg a{color:var(--accent)}
+  .msg b{font-weight:650}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .typing{display:flex;gap:5px;padding:14px 16px}
+  .typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}
+  .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 12px}
+  .chip{
+    border:1.5px solid var(--accent); background:transparent; color:var(--accent);
+    padding:7px 13px; border-radius:999px; cursor:pointer; font-size:13.5px;
+    font-family:system-ui,sans-serif; transition:.15s;
+  }
+  .chip:hover{background:var(--accent);color:#fff}
+  @media (prefers-color-scheme: dark){ .chip{color:#f0b3a8;border-color:#b24b3a} .chip:hover{color:#fff} .msg a{color:#f0b3a8} }
+  form{display:flex;gap:10px;padding:14px 18px;border-top:1px solid rgba(128,110,90,.25)}
+  input{
+    flex:1;padding:13px 16px;border-radius:999px;border:1.5px solid rgba(128,110,90,.35);
+    background:var(--bg);color:var(--ink);font-size:15px;font-family:system-ui,sans-serif;outline:none;
+  }
+  input:focus{border-color:var(--accent)}
+  button.send{
+    border:0;background:var(--accent);color:#fff;border-radius:999px;padding:0 22px;
+    font-size:15px;cursor:pointer;font-family:system-ui,sans-serif;
+  }
+  button.send:hover{filter:brightness(1.1)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">🏛️</div>
+    <div>
+      <h1 id="title">Musée de la Ville</h1>
+      <p>Assistant virtuel · posez-moi vos questions</p>
+    </div>
+  </header>
+  <div id="log" aria-live="polite"></div>
+  <div class="chips" id="chips"></div>
+  <form id="form" autocomplete="off">
+    <input id="input" type="text" placeholder="Écrivez votre question…" aria-label="Votre question">
+    <button class="send" type="submit">Envoyer</button>
+  </form>
+</div>
+
+<script>
+/* ============================================================
+   ✏️  À PERSONNALISER : remplacez les informations ci-dessous
+   par celles de votre musée (nom, horaires, tarifs, etc.).
+   ============================================================ */
+const MUSEE = {
+  nom: "Musée de la Ville",
+  adresse: "12 place de l'Hôtel-de-Ville, 75000 Votreville",
+  telephone: "01 23 45 67 89",
+  email: "contact@musee-de-la-ville.example",
+  site: "https://www.musee-de-la-ville.example"
+};
+
+const INTENTS = [
+  {
+    id: "salutation",
+    mots: ["bonjour","salut","hello","coucou","bonsoir","hey"],
+    reponse: () => `Bonjour ! 👋 Je suis l'assistant du <b>${MUSEE.nom}</b>. Je peux vous renseigner sur les horaires, les tarifs, les expositions, les visites guidées et bien plus.`,
+    suite: ["Horaires","Tarifs","Expositions","Visites guidées"]
+  },
+  {
+    id: "horaires",
+    mots: ["horaire","heure","ouvert","ouverture","ferme","fermeture","quand","jour","ouvre"],
+    reponse: () => `Le musée est ouvert :
+      <ul>
+        <li><b>Mardi – dimanche</b> : 10h – 18h</li>
+        <li><b>Nocturne le jeudi</b> : jusqu'à 21h</li>
+        <li><b>Fermé le lundi</b>, le 1er janvier, le 1er mai et le 25 décembre</li>
+      </ul>Dernière entrée 45 minutes avant la fermeture.`,
+    suite: ["Tarifs","Comment venir ?","Accessibilité"]
+  },
+  {
+    id: "tarifs",
+    mots: ["tarif","prix","combien","coute","cout","billet","entree","payer","gratuit","reduit","reduction","pass"],
+    reponse: () => `Nos tarifs :
+      <ul>
+        <li><b>Plein tarif</b> : 8 €</li>
+        <li><b>Tarif réduit</b> : 5 € (étudiants, seniors, groupes)</li>
+        <li><b>Gratuit</b> : moins de 18 ans, demandeurs d'emploi, personnes en situation de handicap et accompagnateur</li>
+        <li><b>Gratuit pour tous</b> le premier dimanche du mois</li>
+      </ul>Un justificatif est demandé pour les tarifs réduits et gratuits.`,
+    suite: ["Horaires","Réserver","Visites guidées"]
+  },
+  {
+    id: "expositions",
+    mots: ["exposition","expo","collection","oeuvre","tableau","peinture","permanente","temporaire","voir","artiste","exposent"],
+    reponse: () => `Le musée propose :
+      <ul>
+        <li><b>Collection permanente</b> : l'histoire de la ville, de l'Antiquité à nos jours (archéologie, maquettes, peintures, photographies).</li>
+        <li><b>Exposition temporaire</b> : <i>« La ville en mouvement »</i>, jusqu'au 31 janvier.</li>
+        <li><b>Le cabinet des curiosités</b> : objets insolites du quotidien d'autrefois.</li>
+      </ul>`,
+    suite: ["Visites guidées","Enfants","Horaires"]
+  },
+  {
+    id: "visites",
+    mots: ["visite","guidee","guide","audioguide","audio","conference","atelier","parcours"],
+    reponse: () => `Plusieurs façons de découvrir le musée :
+      <ul>
+        <li><b>Visite guidée</b> : samedi et dimanche à 15h (durée 1h, +3 € en plus du billet)</li>
+        <li><b>Audioguide</b> : 3 €, disponible en français, anglais et espagnol</li>
+        <li><b>Visites de groupe</b> sur réservation (10 personnes minimum)</li>
+      </ul>`,
+    suite: ["Réserver","Tarifs","Enfants"]
+  },
+  {
+    id: "reservation",
+    mots: ["reserver","reservation","reserve","inscrire","inscription","billetterie","groupe"],
+    reponse: () => `Vous pouvez réserver :
+      <ul>
+        <li>En ligne : <a href="${MUSEE.site}" target="_blank" rel="noopener">${MUSEE.site.replace('https://','')}</a></li>
+        <li>Par téléphone : <b>${MUSEE.telephone}</b></li>
+        <li>Par e-mail : <b>${MUSEE.email}</b></li>
+      </ul>La réservation est conseillée pour les visites guidées et obligatoire pour les groupes.`,
+    suite: ["Tarifs","Horaires"]
+  },
+  {
+    id: "acces",
+    mots: ["venir","acces","adresse","metro","bus","tram","train","parking","voiture","situe","trouve","où","ou","plan","aller","itineraire","velo"],
+    reponse: () => `📍 <b>${MUSEE.nom}</b><br>${MUSEE.adresse}
+      <ul>
+        <li><b>Métro / tram</b> : station « Hôtel de Ville » (5 min à pied)</li>
+        <li><b>Bus</b> : lignes 21, 38 et 74, arrêt « Place de la Mairie »</li>
+        <li><b>Vélo</b> : stationnement devant l'entrée</li>
+        <li><b>Voiture</b> : parking public à 200 m</li>
+      </ul>`,
+    suite: ["Horaires","Accessibilité"]
+  },
+  {
+    id: "accessibilite",
+    mots: ["accessible","accessibilite","handicap","fauteuil","pmr","mobilite","malvoyant","sourd","malentendant","ascenseur","poussette"],
+    reponse: () => `Le musée est <b>entièrement accessible</b> :
+      <ul>
+        <li>Entrée de plain-pied, ascenseurs et toilettes adaptées</li>
+        <li>Fauteuils roulants et cannes-sièges prêtés gratuitement</li>
+        <li>Visites tactiles et en langue des signes sur demande</li>
+        <li>Poussettes acceptées</li>
+      </ul>Pour préparer votre venue, contactez-nous au ${MUSEE.telephone}.`,
+    suite: ["Comment venir ?","Tarifs"]
+  },
+  {
+    id: "enfants",
+    mots: ["enfant","enfants","famille","scolaire","ecole","bebe","jeune","ado","kids","petit"],
+    reponse: () => `Le musée est très accueillant pour les familles :
+      <ul>
+        <li><b>Gratuit</b> pour les moins de 18 ans</li>
+        <li><b>Livret-jeux</b> « Mène l'enquête » offert à l'accueil (6-12 ans)</li>
+        <li><b>Ateliers créatifs</b> le mercredi et pendant les vacances scolaires, à 14h30</li>
+        <li>Accueil des classes sur réservation, avec dossier pédagogique</li>
+      </ul>`,
+    suite: ["Réserver","Expositions"]
+  },
+  {
+    id: "services",
+    mots: ["cafe","cafeteria","restaurant","boutique","librairie","vestiaire","consigne","toilette","wifi","photo","photographier","manger","boire","services"],
+    reponse: () => `Sur place :
+      <ul>
+        <li>☕ <b>Café du musée</b> : ouvert aux horaires du musée, terrasse sur la cour</li>
+        <li>🛍️ <b>Boutique-librairie</b> : livres d'art, cartes postales, créations locales</li>
+        <li>🧥 <b>Vestiaire gratuit</b> et consignes</li>
+        <li>📶 Wi-Fi gratuit</li>
+        <li>📷 Photos autorisées sans flash pour un usage personnel</li>
+      </ul>`,
+    suite: ["Horaires","Comment venir ?"]
+  },
+  {
+    id: "contact",
+    mots: ["contact","contacter","telephone","appeler","mail","email","courriel","joindre","humain","personne","conseiller"],
+    reponse: () => `Vous pouvez nous joindre :
+      <ul>
+        <li>📞 <b>${MUSEE.telephone}</b> (mardi – vendredi, 9h – 17h)</li>
+        <li>✉️ <b>${MUSEE.email}</b></li>
+        <li>🌐 <a href="${MUSEE.site}" target="_blank" rel="noopener">${MUSEE.site.replace('https://','')}</a></li>
+      </ul>`,
+    suite: ["Horaires","Réserver"]
+  },
+  {
+    id: "merci",
+    mots: ["merci","parfait","super","genial","top","ok merci","au revoir","bye","adieu","bonne journee"],
+    reponse: () => `Avec plaisir ! 😊 Au plaisir de vous accueillir au ${MUSEE.nom}. Belle visite !`,
+    suite: ["Horaires","Expositions"]
+  }
+];
+
+const SUGGESTIONS_DEPART = ["Horaires","Tarifs","Expositions","Visites guidées","Comment venir ?","Enfants"];
+
+/* ============================================================
+   Moteur du chatbot (pas besoin de modifier ce qui suit)
+   ============================================================ */
+const $log = document.getElementById("log");
+const $chips = document.getElementById("chips");
+const $form = document.getElementById("form");
+const $input = document.getElementById("input");
+document.getElementById("title").textContent = MUSEE.nom;
+document.title = "Assistant · " + MUSEE.nom;
+
+const normaliser = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\s'’]/g," ");
+
+function trouverIntention(texte){
+  const t = " " + normaliser(texte).replace(/['’]/g," ") + " ";
+  const mots = t.trim().split(/\s+/);
+  let meilleur = null, meilleurScore = 0;
+  for(const intent of INTENTS){
+    let score = 0;
+    for(const m of intent.mots){
+      const k = normaliser(m);
+      if(k.length <= 2){ if(mots.includes(k)) score += 1; continue; }
+      if(t.includes(" " + k) ) score += 2;          // début de mot (gère les pluriels)
+      else if(k.length > 4 && t.includes(k)) score += 1;
+    }
+    if(score > meilleurScore){ meilleurScore = score; meilleur = intent; }
+  }
+  return meilleurScore > 0 ? meilleur : null;
+}
+
+function ajouterMessage(html, qui){
+  const d = document.createElement("div");
+  d.className = "msg " + qui;
+  if(qui === "user") d.textContent = html; else d.innerHTML = html;
+  $log.appendChild(d);
+  $log.scrollTop = $log.scrollHeight;
+  return d;
+}
+
+function afficherSuggestions(liste){
+  $chips.innerHTML = "";
+  liste.forEach(txt => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = txt;
+    b.onclick = () => envoyer(txt);
+    $chips.appendChild(b);
+  });
+}
+
+function repondre(texte){
+  const typing = document.createElement("div");
+  typing.className = "msg bot typing";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  $log.appendChild(typing); $log.scrollTop = $log.scrollHeight;
+  setTimeout(() => {
+    typing.remove();
+    const intent = trouverIntention(texte);
+    if(intent){
+      ajouterMessage(intent.reponse(), "bot");
+      afficherSuggestions(intent.suite || SUGGESTIONS_DEPART);
+    } else {
+      ajouterMessage(`Je n'ai pas bien compris votre question 🤔. Je peux vous renseigner sur les horaires, les tarifs, les expositions, les visites ou l'accès. Pour autre chose, contactez-nous au <b>${MUSEE.telephone}</b>.`, "bot");
+      afficherSuggestions(SUGGESTIONS_DEPART);
+    }
+  }, 500 + Math.random()*400);
+}
+
+function envoyer(texte){
+  texte = texte.trim();
+  if(!texte) return;
+  ajouterMessage(texte, "user");
+  $input.value = "";
+  $chips.innerHTML = "";
+  repondre(texte);
+}
+
+$form.addEventListener("submit", e => { e.preventDefault(); envoyer($input.value); });
+
+// Message d'accueil
+setTimeout(() => {
+  ajouterMessage(`Bienvenue au <b>${MUSEE.nom}</b> ! 🏛️<br>Comment puis-je vous aider ?`, "bot");
+  afficherSuggestions(SUGGESTIONS_DEPART);
+}, 300);
+</script>
+</body>
+</html>

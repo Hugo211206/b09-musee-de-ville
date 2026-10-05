@@ -85,8 +85,18 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 ### J1-04 · 🎲 Même prompt, autre réponse — [fiche](checkpoints/J1-04-meme-prompt.md)
 
 - [ ] Validé
-- Le prompt de référence (identique aux trois essais) :
+- Le prompt de référence (identique aux trois essais, collé mot pour mot dans trois conversations neuves) : Fais-moi un chatbot sur musée de ville, dans une seule page HTML que j'ouvre dans mon navigateur
 - Le tableau des écarts (trois colonnes A, B, C ; au moins quatre critères ; des faits, pas des impressions) :
+
+| Critère | A | B | C |
+|---|---|---|---|
+| Lignes | 327 | 483 | 464 |
+| Sujets reconnus | 12 | 19 | 14 |
+| Message vide | ignoré | ignoré | ignoré |
+| Après F5 | conversation effacée | conversation effacée | conversation effacée |
+| Fonctionnalités en plus | boutons de suggestion | boutons de suggestion, statut « Ouvert/Fermé », bouton grisé pendant la réponse | boutons de suggestion, statut « Ouvert/Fermé », 2 expositions |
+| Plein tarif | 8 € | 10 € | 8 € |
+
 - Une phrase de conclusion (ce que ces écarts autorisent, ce qu'ils interdisent de supposer) :
 - Difficulté qui reste :
 

@@ -14,7 +14,8 @@ Répartissez-vous le travail : chacun lance une ou deux conversations et ouvre a
 
 1. Dans le [carnet](../carnet.md), copiez **exactement** votre prompt de J1-02 : c'est le prompt de référence, pas un mot ni une virgule de changé. Collez-le dans la section J1-04, avec la mention « identique aux trois essais ».
 2. Ouvrez **trois nouvelles conversations** du chat, jamais la suite de l'ancienne, et collez le prompt de référence dans chacune.
-3. Pour chaque réponse, copiez le code complet dans un fichier de `essais-n0` : `essai-A.html`, `essai-B.html`, `essai-C.html`. Ne corrigez rien.
+3. Pour chaque réponse, copiez le code complet d
+ans un fichier de `essais-n0` : `essai-A.html`, `essai-B.html`, `essai-C.html`. Ne corrigez rien.
 4. Ouvrez les trois pages et faites sur chacune les mêmes cinq essais : un message sur le thème ; un message hors thème ; un message vide ; un rechargement (F5) ; une fenêtre réduite à 360 px de large. Vous pouvez reprendre les comportements de votre liste de contrôle de J1-03.
 5. Dans le carnet, section J1-04, remplissez le tableau : trois colonnes, au moins quatre critères. Une cellule est un **fait constaté** (« 112 lignes », « refuse le message vide », « le script est en bas de la page »), jamais une impression (« mieux », « plus propre »).
 

@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assistant du Musée de la Ville</title>
+<style>
+  :root {
+    --bg: #f4efe6;
+    --card: #fffdf8;
+    --ink: #2b2620;
+    --muted: #7a7064;
+    --accent: #8c2f39;
+    --accent-ink: #fff;
+    --bot: #ece4d4;
+    --line: #ddd2bd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1815;
+      --card: #25211d;
+      --ink: #efe8dc;
+      --muted: #a39887;
+      --accent: #c4545f;
+      --accent-ink: #fff;
+      --bot: #332d26;
+      --line: #3d362d;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .app {
+    width: 100%; max-width: 640px; height: min(100%, 780px);
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 18px; display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,.12);
+  }
+  header {
+    padding: 18px 20px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo {
+    width: 44px; height: 44px; border-radius: 50%; background: var(--accent);
+    color: var(--accent-ink); display: grid; place-items: center; flex: none;
+  }
+  .logo svg { width: 24px; height: 24px; }
+  h1 { font: 600 20px/1.2 Georgia, "Times New Roman", serif; margin: 0; }
+  header p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+  #status { display: inline-flex; align-items: center; gap: 6px; }
+  #status::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted);
+  }
+  #status.open::before { background: #3a9d5d; }
+  #status.closed::before { background: #c0504d; }
+
+  #chat {
+    flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .msg {
+    max-width: 85%; padding: 10px 14px; border-radius: 16px; word-wrap: break-word;
+    animation: pop .18s ease-out;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } }
+  .msg.bot { background: var(--bot); border-bottom-left-radius: 4px; align-self: flex-start; }
+  .msg.user { background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; align-self: flex-end; }
+  .msg p { margin: 0 0 8px; } .msg p:last-child { margin: 0; }
+  .msg ul { margin: 6px 0; padding-left: 20px; }
+  .msg a { color: inherit; }
+
+  .typing { display: flex; gap: 4px; padding: 14px; }
+  .typing i {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+    animation: blink 1s infinite;
+  }
+  .typing i:nth-child(2) { animation-delay: .15s; }
+  .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; max-width: 95%; }
+  .chip {
+    border: 1px solid var(--accent); color: var(--accent); background: transparent;
+    border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .chip:hover, .chip:focus-visible { background: var(--accent); color: var(--accent-ink); outline: none; }
+
+  form { display: flex; gap: 8px; padding: 14px; border-top: 1px solid var(--line); }
+  input {
+    flex: 1; padding: 12px 16px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font: inherit; min-width: 0;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.send {
+    border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 999px;
+    padding: 0 20px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button.send:disabled { opacity: .5; cursor: default; }
+  @media (max-width: 480px) { body { padding: 0; } .app { border-radius: 0; height: 100%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-5 9 5"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>
+      </svg>
+    </div>
+    <div>
+      <h1 id="museumName"></h1>
+      <p><span id="status">…</span></p>
+    </div>
+  </header>
+  <div id="chat" aria-live="polite"></div>
+  <form id="form" autocomplete="off">
+    <input id="input" type="text" placeholder="Posez votre question…" aria-label="Votre message">
+    <button class="send" type="submit">Envoyer</button>
+  </form>
+</div>
+
+<script>
+/* =====================================================================
+   1. INFORMATIONS DU MUSÉE  —  À MODIFIER avec les vraies données
+   (les valeurs ci-dessous sont des exemples)
+   ===================================================================== */
+const MUSEE = {
+  nom: "Musée de la Ville",
+  adresse: "12 place de l'Hôtel-de-Ville, 75000 Votreville",
+  telephone: "01 23 45 67 89",
+  email: "contact@musee-exemple.fr",
+  site: "https://www.musee-exemple.fr",
+  acces: [
+    "Métro : ligne 1, station « Hôtel de Ville » (3 min à pied)",
+    "Bus : lignes 21, 69 et 76, arrêt « Musée »",
+    "Vélo : station de vélos en libre-service à 50 m",
+    "Voiture : parking public « Centre-Ville » à 200 m"
+  ],
+  // Horaires : [ouverture, fermeture] en heures décimales. null = fermé.
+  // 0 = dimanche, 1 = lundi, … 6 = samedi
+  horaires: {
+    0: [10, 18], 1: null, 2: [10, 18], 3: [10, 18],
+    4: [10, 21], 5: [10, 18], 6: [10, 18]
+  },
+  fermesExceptionnels: "Fermé le 1er janvier, le 1er mai et le 25 décembre.",
+  tarifs: [
+    ["Plein tarif", "10 €"],
+    ["Tarif réduit (étudiants, seniors, groupes)", "6 €"],
+    ["Moins de 18 ans", "Gratuit"],
+    ["Demandeurs d'emploi, bénéficiaires du RSA", "Gratuit"],
+    ["Pass annuel", "25 €"]
+  ],
+  gratuitePremierDimanche: true,
+  collections: [
+    "<b>Archéologie</b> : des premières traces d'occupation à l'époque gallo-romaine",
+    "<b>Le Moyen Âge</b> : sculptures, manuscrits enluminés et maquette de la ville en 1400",
+    "<b>Les Beaux-Arts</b> : peintures et dessins du XVIe au XIXe siècle",
+    "<b>La ville industrielle</b> : machines, affiches et photographies d'usine",
+    "<b>Vie quotidienne</b> : objets, mode et mobilier du XXe siècle"
+  ],
+  expo: {
+    titre: "La ville sous les flashs, 1900-1960",
+    dates: "du 15 septembre 2026 au 31 mars 2027",
+    texte: "Plus de 200 photographies, affiches et films racontent la transformation de la ville."
+  },
+  visites: {
+    guidee: "Visite guidée tous les jours à 15 h (sauf lundi), durée 1 h 15, 5 € en plus du billet d'entrée.",
+    famille: "Visite en famille les mercredis et samedis à 14 h 30, dès 6 ans.",
+    groupes: "Groupes à partir de 10 personnes : réservation obligatoire par e-mail, au moins 15 jours à l'avance."
+  },
+  ateliers: "Ateliers pour les 4-12 ans pendant les vacances scolaires et le mercredi après-midi (8 € par enfant, sur réservation).",
+  accessibilite: [
+    "Bâtiment accessible aux personnes à mobilité réduite (ascenseurs, rampes d'accès)",
+    "Fauteuils roulants et cannes-sièges prêtés gratuitement à l'accueil",
+    "Visites adaptées pour les publics sourds, malentendants, aveugles et malvoyants sur réservation",
+    "Chiens guides et d'assistance acceptés"
+  ],
+  services: {
+    boutique: "La boutique est ouverte aux mêmes horaires que le musée : livres d'art, reproductions, cartes postales et créations d'artisans locaux.",
+    cafe: "Le café du musée est ouvert de 10 h à 17 h 30, avec une terrasse dans la cour intérieure.",
+    vestiaire: "Vestiaire et consignes gratuits à l'accueil. Les grands sacs et valises ne sont pas admis dans les salles.",
+    wifi: "Wi-Fi gratuit dans tout le musée (réseau « Musee-Visiteurs »)."
+  },
+  photo: "La photo sans flash est autorisée pour un usage personnel. Les trépieds, perches à selfie et drones ne sont pas admis. Certaines œuvres prêtées sont signalées comme non photographiables.",
+  dureeVisite: "Comptez environ 1 h 30 à 2 h pour une visite complète, ou 45 minutes pour les temps forts.",
+  reservation: "Vous pouvez acheter vos billets en ligne ou à l'accueil. La réservation en ligne est conseillée le week-end et pendant les vacances scolaires."
+};
+
+/* =====================================================================
+   2. UTILITAIRES
+   ===================================================================== */
+const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+
+function norm(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[’']/g, " ").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+}
+function hh(x) {
+  const h = Math.floor(x), m = Math.round((x - h) * 60);
+  return m ? `${h} h ${String(m).padStart(2, "0")}` : `${h} h`;
+}
+function li(arr) { return "<ul>" + arr.map(x => `<li>${x}</li>`).join("") + "</ul>"; }
+
+function etatOuverture(date = new Date()) {
+  const d = date.getDay(), now = date.getHours() + date.getMinutes() / 60;
+  const h = MUSEE.horaires[d];
+  if (h && now >= h[0] && now < h[1]) return { ouvert: true, texte: `Ouvert maintenant · ferme à ${hh(h[1])}` };
+  if (h && now < h[0]) return { ouvert: false, texte: `Fermé · ouvre aujourd'hui à ${hh(h[0])}` };
+  for (let i = 1; i <= 7; i++) {
+    const j = (d + i) % 7;
+    if (MUSEE.horaires[j]) {
+      const quand = i === 1 ? "demain" : JOURS[j];
+      return { ouvert: false, texte: `Fermé · ouvre ${quand} à ${hh(MUSEE.horaires[j][0])}` };
+    }
+  }
+  return { ouvert: false, texte: "Fermé" };
+}
+
+function tableauHoraires() {
+  const ordre = [2, 3, 4, 5, 6, 0, 1];
+  return li(ordre.map(j => {
+    const h = MUSEE.horaires[j];
+    const nom = JOURS[j][0].toUpperCase() + JOURS[j].slice(1);
+    return `${nom} : ${h ? hh(h[0]) + " – " + hh(h[1]) : "fermé"}`;
+  }));
+}
+
+/* =====================================================================
+   3. BASE DE CONNAISSANCES
+   Chaque entrée : des mots-clés (sans accents, minuscules) et une réponse.
+   Les expressions de plusieurs mots comptent davantage.
+   ===================================================================== */
+const SUGGESTIONS_DEFAUT = ["Horaires", "Tarifs", "Expositions", "Visites guidées", "Accès"];
+
+const INTENTS = [
+  {
+    id: "salut",
+    mots: ["bonjour", "salut", "coucou", "bonsoir", "hello", "hey"],
+    reponse: () => `<p>Bonjour ! Je suis l'assistant du ${MUSEE.nom}. Je peux vous renseigner sur les horaires, les tarifs, les collections, les visites… Que souhaitez-vous savoir ?</p>`
+  },
+  {
+    id: "ouvert",
+    mots: ["ouvert aujourd hui", "ouvert maintenant", "est ouvert", "etes vous ouvert", "ouvert demain", "ouvert ce", "ouvert le", "ferme aujourd hui", "ouvert actuellement", "ouvert ce soir"],
+    reponse: () => {
+      const e = etatOuverture();
+      return `<p><b>${e.texte}.</b></p><p>${MUSEE.fermesExceptionnels}</p>`;
+    },
+    suites: ["Horaires", "Tarifs"]
+  },
+  {
+    id: "horaires",
+    mots: ["horaire", "horaires", "heure", "heures", "ouverture", "fermeture", "quand", "jour de fermeture", "nocturne", "ouvre", "ferme", "ferme a quelle heure"],
+    reponse: () => `<p>Le ${MUSEE.nom} vous accueille :</p>${tableauHoraires()}<p>Dernière entrée 30 minutes avant la fermeture. ${MUSEE.fermesExceptionnels}</p>`,
+    suites: ["Est-il ouvert maintenant ?", "Tarifs", "Réserver"]
+  },
+  {
+    id: "tarifs",
+    mots: ["tarif", "tarifs", "prix", "combien", "cout", "coute", "payant", "gratuit", "gratuite", "entree", "billet", "reduction", "reduit", "etudiant", "senior", "pass", "abonnement", "demandeur"],
+    reponse: () => {
+      const lignes = MUSEE.tarifs.map(([n, p]) => `${n} : <b>${p}</b>`);
+      let t = `<p>Voici nos tarifs :</p>${li(lignes)}`;
+      if (MUSEE.gratuitePremierDimanche) t += `<p>L'entrée est aussi <b>gratuite le premier dimanche de chaque mois</b>.</p>`;
+      return t;
+    },
+    suites: ["Réserver", "Horaires", "Visites guidées"]
+  },
+  {
+    id: "reservation",
+    mots: ["reserver", "reservation", "acheter", "billetterie", "en ligne", "ticket", "file d attente", "attente"],
+    reponse: () => `<p>${MUSEE.reservation}</p><p>Billetterie en ligne : <a href="${MUSEE.site}" target="_blank" rel="noopener">${MUSEE.site.replace("https://", "")}</a></p>`,
+    suites: ["Tarifs", "Horaires"]
+  },
+  {
+    id: "collections",
+    mots: ["collection", "collections", "oeuvre", "oeuvres", "salle", "salles", "permanent", "permanente", "exposer", "que voir", "voir", "peinture", "archeologie", "histoire", "moyen age", "objets"],
+    reponse: () => `<p>Le parcours permanent présente :</p>${li(MUSEE.collections)}`,
+    suites: ["Exposition temporaire", "Durée de la visite", "Visites guidées"]
+  },
+  {
+    id: "expo",
+    mots: ["exposition", "expositions", "expo", "temporaire", "exposition temporaire", "en ce moment", "actuellement", "nouveaute", "evenement", "programme"],
+    reponse: () => `<p>Exposition en cours : <b>${MUSEE.expo.titre}</b></p><p>${MUSEE.expo.dates}.</p><p>${MUSEE.expo.texte}</p><p>L'accès est inclus dans le billet d'entrée.</p>`,
+    suites: ["Visites guidées", "Tarifs"]
+  },
+  {
+    id: "visites",
+    mots: ["visite guidee", "visites guidees", "guide", "guidee", "audioguide", "audio guide", "conference", "groupe", "groupes", "scolaire", "classe", "ecole"],
+    reponse: () => `<p>${MUSEE.visites.guidee}</p><p>${MUSEE.visites.famille}</p><p>${MUSEE.visites.groupes}</p><p>Un audioguide est disponible à l'accueil en français, anglais et espagnol.</p>`,
+    suites: ["Enfants", "Tarifs", "Contact"]
+  },
+  {
+    id: "enfants",
+    mots: ["enfant", "enfants", "famille", "bebe", "poussette", "atelier", "ateliers", "jeune", "ado", "petit", "petits", "anniversaire"],
+    reponse: () => `<p>${MUSEE.ateliers}</p><p>${MUSEE.visites.famille}</p><p>Des livrets-jeux sont offerts à l'accueil, et les poussettes sont acceptées dans tout le musée.</p>`,
+    suites: ["Tarifs", "Réserver"]
+  },
+  {
+    id: "acces",
+    mots: ["acces", "adresse", "ou", "ou se trouve", "situe", "comment venir", "venir", "metro", "bus", "tram", "parking", "garer", "stationnement", "velo", "transport", "plan", "itineraire", "trouver"],
+    reponse: () => `<p><b>${MUSEE.nom}</b><br>${MUSEE.adresse}</p>${li(MUSEE.acces)}<p><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MUSEE.nom + " " + MUSEE.adresse)}" target="_blank" rel="noopener">Ouvrir dans Google Maps</a></p>`,
+    suites: ["Accessibilité", "Horaires"]
+  },
+  {
+    id: "accessibilite",
+    mots: ["accessibilite", "accessible", "handicap", "handicape", "pmr", "mobilite reduite", "fauteuil", "fauteuil roulant", "ascenseur", "sourd", "aveugle", "malvoyant", "malentendant", "chien guide"],
+    reponse: () => `<p>Le musée est ouvert à tous :</p>${li(MUSEE.accessibilite)}`,
+    suites: ["Accès", "Contact"]
+  },
+  {
+    id: "boutique",
+    mots: ["boutique", "librairie", "souvenir", "souvenirs", "cadeau", "carte postale", "livre"],
+    reponse: () => `<p>${MUSEE.services.boutique}</p>`,
+    suites: ["Café", "Horaires"]
+  },
+  {
+    id: "cafe",
+    mots: ["cafe", "restaurant", "manger", "restauration", "boire", "dejeuner", "gouter", "terrasse", "pique nique", "pique-nique"],
+    reponse: () => `<p>${MUSEE.services.cafe}</p>`,
+    suites: ["Boutique", "Horaires"]
+  },
+  {
+    id: "services",
+    mots: ["vestiaire", "consigne", "consignes", "sac", "valise", "bagage", "bagages", "wifi", "wi fi", "toilettes", "wc", "banc"],
+    reponse: () => `<p>${MUSEE.services.vestiaire}</p><p>${MUSEE.services.wifi}</p>`,
+    suites: ["Photos", "Accessibilité"]
+  },
+  {
+    id: "photo",
+    mots: ["photo", "photos", "photographier", "flash", "filmer", "video", "selfie", "tripode", "drone", "regle", "regles", "interdit", "autorise", "animaux", "chien"],
+    reponse: () => `<p>${MUSEE.photo}</p><p>Les animaux ne sont pas admis, à l'exception des chiens guides et d'assistance.</p>`,
+    suites: ["Vestiaire", "Accessibilité"]
+  },
+  {
+    id: "duree",
+    mots: ["duree", "combien de temps", "temps", "longtemps", "rapide", "parcours"],
+    reponse: () => `<p>${MUSEE.dureeVisite}</p>`,
+    suites: ["Collections", "Visites guidées"]
+  },
+  {
+    id: "contact",
+    mots: ["contact", "contacter", "telephone", "appeler", "tel", "mail", "email", "e mail", "ecrire", "joindre", "humain", "conseiller", "personne", "reclamation"],
+    reponse: () => `<p>Pour toute demande, vous pouvez joindre l'équipe :</p>${li([
+      `Téléphone : <b>${MUSEE.telephone}</b>`,
+      `E-mail : <a href="mailto:${MUSEE.email}">${MUSEE.email}</a>`,
+      `Site : <a href="${MUSEE.site}" target="_blank" rel="noopener">${MUSEE.site.replace("https://", "")}</a>`
+    ])}`,
+    suites: ["Horaires", "Accès"]
+  },
+  {
+    id: "merci",
+    mots: ["merci", "super", "parfait", "genial", "top", "excellent", "bravo"],
+    reponse: () => `<p>Avec plaisir ! N'hésitez pas si vous avez d'autres questions. Bonne visite !</p>`
+  },
+  {
+    id: "aurevoir",
+    mots: ["au revoir", "bye", "a bientot", "adieu", "bonne journee", "bonne soiree", "salut a"],
+    reponse: () => `<p>Au revoir et à bientôt au ${MUSEE.nom} !</p>`
+  },
+  {
+    id: "bot",
+    mots: ["qui es tu", "tu es qui", "es tu un robot", "t appelles", "ton nom", "aide", "aider", "que peux tu faire", "que sais tu"],
+    reponse: () => `<p>Je suis l'assistant virtuel du ${MUSEE.nom}. Je réponds aux questions pratiques : horaires, tarifs, collections, expositions, visites, accès, services… Pour tout le reste, l'équipe de l'accueil vous répondra : ${MUSEE.telephone}.</p>`
+  }
+];
+
+/* =====================================================================
+   4. MOTEUR DE RÉPONSE
+   ===================================================================== */
+function trouverIntent(texte) {
+  const t = " " + norm(texte) + " ";
+  let meilleur = null, meilleurScore = 0;
+  for (const it of INTENTS) {
+    let score = 0;
+    for (const m of it.mots) {
+      const k = norm(m);
+      if (!k) continue;
+      // correspondance sur mot entier (ou expression entière)
+      if (t.includes(" " + k + " ")) score += 1 + k.split(" ").length * 2 + k.length / 20;
+      // tolérance : début de mot pour les mots de 5+ lettres (ex. « reserv »)
+      else if (k.length >= 6 && !k.includes(" ") && t.includes(" " + k.slice(0, k.length - 2))) score += 0.8;
+    }
+    if (score > meilleurScore) { meilleurScore = score; meilleur = it; }
+  }
+  return meilleurScore >= 1 ? meilleur : null;
+}
+
+const SUGGESTION_VERS_QUESTION = {
+  "Est-il ouvert maintenant ?": "Est-il ouvert maintenant ?",
+};
+
+function repondre(texte) {
+  const it = trouverIntent(texte);
+  if (it) return { html: it.reponse(), suites: it.suites || SUGGESTIONS_DEFAUT };
+  return {
+    html: `<p>Je n'ai pas bien compris votre question. Je peux vous renseigner sur les horaires, les tarifs, les collections, les expositions, les visites ou l'accès.</p><p>Pour une demande particulière, contactez l'accueil au <b>${MUSEE.telephone}</b>.</p>`,
+    suites: SUGGESTIONS_DEFAUT
+  };
+}
+
+/* =====================================================================
+   5. INTERFACE
+   ===================================================================== */
+const chat = document.getElementById("chat");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const sendBtn = form.querySelector("button");
+let occupe = false;
+
+document.getElementById("museumName").textContent = MUSEE.nom;
+document.title = "Assistant · " + MUSEE.nom;
+
+function majStatut() {
+  const e = etatOuverture();
+  const el = document.getElementById("status");
+  el.textContent = e.texte;
+  el.className = e.ouvert ? "open" : "closed";
+}
+majStatut();
+setInterval(majStatut, 60000);
+
+function descendre() { chat.scrollTop = chat.scrollHeight; }
+
+function bulle(role, html, estTexte = false) {
+  const d = document.createElement("div");
+  d.className = "msg " + role;
+  if (estTexte) d.textContent = html; else d.innerHTML = html;
+  chat.appendChild(d);
+  descendre();
+  return d;
+}
+
+function afficherSuggestions(liste) {
+  document.querySelectorAll(".chips").forEach(c => c.remove());
+  const box = document.createElement("div");
+  box.className = "chips";
+  liste.forEach(label => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = label;
+    b.addEventListener("click", () => envoyer(label));
+    box.appendChild(b);
+  });
+  chat.appendChild(box);
+  descendre();
+}
+
+function envoyer(texte) {
+  texte = texte.trim();
+  if (!texte || occupe) return;
+  occupe = true; sendBtn.disabled = true;
+  document.querySelectorAll(".chips").forEach(c => c.remove());
+  bulle("user", texte, true);
+  input.value = "";
+
+  const attente = document.createElement("div");
+  attente.className = "msg bot typing";
+  attente.innerHTML = "<i></i><i></i><i></i>";
+  chat.appendChild(attente);
+  descendre();
+
+  const r = repondre(texte);
+  setTimeout(() => {
+    attente.remove();
+    bulle("bot", r.html);
+    afficherSuggestions(r.suites);
+    occupe = false; sendBtn.disabled = false;
+    input.focus();
+  }, 450 + Math.random() * 350);
+}
+
+form.addEventListener("submit", e => { e.preventDefault(); envoyer(input.value); });
+
+// Message d'accueil
+bulle("bot", `<p>Bonjour et bienvenue au <b>${MUSEE.nom}</b> ! Je suis votre assistant virtuel.</p><p>Posez-moi une question ou choisissez un sujet ci-dessous.</p>`);
+afficherSuggestions(SUGGESTIONS_DEFAUT);
+</script>
+</body>
+</html>

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assistant du Musée de la Ville</title>
+<style>
+  :root {
+    --bg: #f5efe6;
+    --card: #fffdf9;
+    --ink: #2b2420;
+    --muted: #7a6e64;
+    --accent: #8c2f1b;
+    --accent-soft: #f0dcd4;
+    --bot: #ece3d6;
+    --line: #e2d8c9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1815;
+      --card: #25201c;
+      --ink: #f1e9df;
+      --muted: #a89c90;
+      --accent: #d9694c;
+      --accent-soft: #3a2a24;
+      --bot: #322b25;
+      --line: #3a332c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  .app {
+    width: 100%;
+    max-width: 640px;
+    height: min(780px, calc(100vh - 32px));
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: grid; place-items: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  header h1 { margin: 0; font-size: 18px; letter-spacing: .2px; }
+  header p { margin: 2px 0 0; font-size: 13px; color: var(--muted); font-family: system-ui, sans-serif; }
+  .status { margin-left: auto; font: 600 12px system-ui, sans-serif; padding: 5px 10px; border-radius: 99px; white-space: nowrap; }
+  .status.open { background: #dcefdc; color: #25622b; }
+  .status.closed { background: var(--accent-soft); color: var(--accent); }
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 18px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .msg {
+    max-width: 85%;
+    padding: 11px 15px;
+    border-radius: 16px;
+    line-height: 1.5;
+    font-size: 15.5px;
+    animation: pop .25s ease;
+  }
+  .msg.bot { background: var(--bot); border-bottom-left-radius: 4px; align-self: flex-start; }
+  .msg.user { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
+  .msg ul { margin: 6px 0 0; padding-left: 20px; }
+  .msg li { margin: 2px 0; }
+  .msg a { color: var(--accent); }
+  .msg.user a { color: #fff; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .typing { display: inline-flex; gap: 4px; padding: 14px 16px; }
+  .typing span { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; animation: blink 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  .chips {
+    padding: 8px 18px 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 44px;
+  }
+  .chip {
+    font: 500 13.5px system-ui, sans-serif;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: transparent;
+    padding: 7px 13px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .chip:hover { background: var(--accent); color: #fff; }
+  form {
+    display: flex;
+    gap: 10px;
+    padding: 12px 18px 18px;
+    border-top: 1px solid var(--line);
+  }
+  input {
+    flex: 1;
+    font: 15.5px system-ui, sans-serif;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: var(--bg);
+    color: var(--ink);
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  button.send {
+    border: 0;
+    background: var(--accent);
+    color: #fff;
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  button.send:hover { filter: brightness(1.1); }
+  footer { text-align: center; font: 11.5px system-ui, sans-serif; color: var(--muted); padding: 0 0 10px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="logo">🏛</div>
+    <div>
+      <h1 id="museumName"></h1>
+      <p>Assistant virtuel · Posez vos questions</p>
+    </div>
+    <div class="status" id="status"></div>
+  </header>
+
+  <div id="chat" aria-live="polite"></div>
+  <div class="chips" id="chips"></div>
+
+  <form id="form" autocomplete="off">
+    <input id="input" type="text" placeholder="Écrivez votre question…" aria-label="Votre question">
+    <button class="send" type="submit" aria-label="Envoyer">➤</button>
+  </form>
+  <footer>Les informations sont données à titre indicatif.</footer>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURATION — modifiez ici les informations de VOTRE musée
+   ============================================================ */
+const CONFIG = {
+  name: "Musée de la Ville",
+  city: "votre ville",
+  address: "12 place de l'Hôtel-de-Ville",
+  phone: "01 23 45 67 89",
+  email: "contact@musee-ville.example",
+  website: "https://www.musee-ville.example",
+
+  // Horaires par jour : 0 = dimanche … 6 = samedi. null = fermé. Format [ouverture, fermeture] en heures décimales.
+  hours: {
+    0: [10, 18],
+    1: null,
+    2: [10, 18],
+    3: [10, 18],
+    4: [10, 21],   // nocturne le jeudi
+    5: [10, 18],
+    6: [10, 18]
+  },
+  closedDays: "1er janvier, 1er mai et 25 décembre",
+
+  prices: [
+    ["Plein tarif", "8 €"],
+    ["Tarif réduit (étudiants, seniors, demandeurs d'emploi)", "5 €"],
+    ["Moins de 18 ans", "Gratuit"],
+    ["Habitants de la ville (sur justificatif)", "Gratuit"],
+    ["Premier dimanche du mois", "Gratuit pour tous"]
+  ],
+
+  access: {
+    metro: "Ligne 1, station Hôtel-de-Ville (3 min à pied)",
+    bus: "Lignes 12 et 27, arrêt Place de la Mairie",
+    car: "Parking public Saint-Louis à 200 m (tarif préférentiel avec votre billet)",
+    bike: "Station de vélos en libre-service devant l'entrée"
+  },
+
+  collections: [
+    "<b>Antiquité et Moyen Âge</b> : vestiges gallo-romains, enluminures et plan ancien de la cité",
+    "<b>Ville industrielle (XIXᵉ siècle)</b> : maquettes d'usines, affiches, outils d'artisans",
+    "<b>Arts et métiers locaux</b> : céramiques, textiles et mobilier régional",
+    "<b>La ville au XXᵉ siècle</b> : photographies, objets du quotidien, témoignages sonores"
+  ],
+
+  exhibitions: [
+    { title: "La ville sous la loupe", dates: "du 15 septembre 2026 au 28 février 2027", text: "Cartes, plans et vues aériennes qui racontent l'évolution de la cité depuis 300 ans." },
+    { title: "Visages de quartier", dates: "jusqu'au 10 janvier 2027", text: "Portraits photographiques d'habitants, réalisés par un collectif local." }
+  ],
+
+  tours: {
+    guided: "Visite guidée tous les samedis et dimanches à 15h (durée 1h15, 4 € en plus du billet).",
+    groups: "Groupes à partir de 10 personnes et scolaires : réservation obligatoire au moins 15 jours à l'avance.",
+    audio: "Audioguide disponible en français, anglais, espagnol et allemand (3 €)."
+  }
+};
+
+/* ============================================================
+   BASE DE CONNAISSANCES
+   Chaque "intent" : des mots-clés + une réponse + des suggestions
+   ============================================================ */
+const DAYS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+const fmtH = h => { const hh = Math.floor(h), mm = Math.round((h - hh) * 60); return mm ? `${hh}h${String(mm).padStart(2,"0")}` : `${hh}h`; };
+
+function hoursList() {
+  const order = [1,2,3,4,5,6,0];
+  return "<ul>" + order.map(d => {
+    const h = CONFIG.hours[d];
+    return `<li><b>${DAYS[d][0].toUpperCase() + DAYS[d].slice(1)}</b> : ${h ? fmtH(h[0]) + " – " + fmtH(h[1]) : "fermé"}</li>`;
+  }).join("") + "</ul>";
+}
+
+function openStatus(date = new Date()) {
+  const d = date.getDay(), now = date.getHours() + date.getMinutes() / 60;
+  const h = CONFIG.hours[d];
+  if (h && now >= h[0] && now < h[1]) return { open: true, text: `Ouvert · ferme à ${fmtH(h[1])}` };
+  // chercher la prochaine ouverture
+  for (let i = 0; i < 8; i++) {
+    const dd = (d + i) % 7, hh = CONFIG.hours[dd];
+    if (!hh) continue;
+    if (i === 0 && now < hh[0]) return { open: false, text: `Fermé · ouvre à ${fmtH(hh[0])}` };
+    if (i > 0) return { open: false, text: `Fermé · rouvre ${i === 1 ? "demain" : DAYS[dd]} à ${fmtH(hh[0])}` };
+  }
+  return { open: false, text: "Fermé" };
+}
+
+const INTENTS = [
+  {
+    id: "greeting",
+    keywords: ["bonjour","salut","coucou","hello","bonsoir","hey"],
+    answer: () => `Bonjour et bienvenue au ${CONFIG.name} ! 👋 Je peux vous renseigner sur les horaires, les tarifs, l'accès, les collections ou les expositions en cours.`,
+    next: ["Horaires","Tarifs","Expositions"]
+  },
+  {
+    id: "hours",
+    keywords: ["horaire","heure","ouvert","ouverture","ferme","fermeture","ouvre","quand","jour","nocturne","aujourd"],
+    answer: () => {
+      const s = openStatus();
+      return `Actuellement : <b>${s.text.toLowerCase()}</b>.<br>Nos horaires :${hoursList()}Fermeture exceptionnelle : ${CONFIG.closedDays}.`;
+    },
+    next: ["Tarifs","Comment venir","Visites guidées"]
+  },
+  {
+    id: "prices",
+    keywords: ["tarif","prix","combien","billet","entree","payant","gratuit","cout","reduit","etudiant","senior","coute","payer","pass"],
+    answer: () => "Voici nos tarifs :<ul>" + CONFIG.prices.map(p => `<li>${p[0]} : <b>${p[1]}</b></li>`).join("") + "</ul>Vous pouvez acheter vos billets sur place ou en ligne.",
+    next: ["Horaires","Visites guidées","Accessibilité"]
+  },
+  {
+    id: "access",
+    keywords: ["acces","venir","adresse","metro","bus","parking","voiture","situe","ou","trouve","transport","velo","itineraire","aller","localisation","gare"],
+    answer: () => `Le musée se trouve au <b>${CONFIG.address}</b>.<ul>
+      <li>🚇 ${CONFIG.access.metro}</li>
+      <li>🚌 ${CONFIG.access.bus}</li>
+      <li>🚗 ${CONFIG.access.car}</li>
+      <li>🚲 ${CONFIG.access.bike}</li></ul>`,
+    next: ["Accessibilité","Horaires","Contact"]
+  },
+  {
+    id: "collections",
+    keywords: ["collection","oeuvre","piece","permanent","histoire","expose","voir","visiter","contenu","objet","artefact","salle","parcours"],
+    answer: () => "Le parcours permanent est organisé en quatre grandes sections :<ul>" + CONFIG.collections.map(c => `<li>${c}</li>`).join("") + "</ul>Comptez environ 1h30 pour une visite complète.",
+    next: ["Expositions","Visites guidées","Enfants"]
+  },
+  {
+    id: "exhibitions",
+    keywords: ["exposition","temporaire","actuellement","evenement","programme","actualite","nouveaute","agenda","en cours"],
+    answer: () => "Expositions temporaires en ce moment :<ul>" + CONFIG.exhibitions.map(e => `<li><b>${e.title}</b> (${e.dates}) : ${e.text}</li>`).join("") + "</ul>Elles sont comprises dans le prix du billet.",
+    next: ["Tarifs","Collections","Horaires"]
+  },
+  {
+    id: "tours",
+    keywords: ["visite guidee","guide","audioguide","groupe","scolaire","classe","reservation","reserver","conference","atelier"],
+    answer: () => `<ul><li>${CONFIG.tours.guided}</li><li>${CONFIG.tours.audio}</li><li>${CONFIG.tours.groups}</li></ul>Pour réserver : <a href="mailto:${CONFIG.email}">${CONFIG.email}</a> ou ${CONFIG.phone}.`,
+    next: ["Tarifs","Contact","Enfants"]
+  },
+  {
+    id: "kids",
+    keywords: ["enfant","famille","bebe","poussette","jeune","ado","ludique","jeu","petit","gamin","kids"],
+    answer: () => "Le musée est très adapté aux familles 👨‍👩‍👧 : entrée <b>gratuite pour les moins de 18 ans</b>, livret-jeu pour les 6-12 ans à l'accueil, poussettes admises et table à langer disponible. Des ateliers créatifs ont lieu pendant les vacances scolaires.",
+    next: ["Tarifs","Visites guidées","Accessibilité"]
+  },
+  {
+    id: "accessibility",
+    keywords: ["handicap","accessibilite","mobilite","fauteuil","pmr","malvoyant","sourd","malentendant","ascenseur","accessible","pmr"],
+    answer: () => "Le musée est accessible aux personnes à mobilité réduite : entrée de plain-pied, ascenseurs vers tous les niveaux, fauteuils roulants prêtés à l'accueil. Des visites tactiles et en langue des signes sont proposées sur demande. L'accompagnateur bénéficie de la gratuité.",
+    next: ["Comment venir","Contact","Tarifs"]
+  },
+  {
+    id: "services",
+    keywords: ["boutique","cafe","restaurant","manger","boire","vestiaire","consigne","wifi","toilette","cadeau","librairie","sac"],
+    answer: () => "Sur place : une <b>boutique-librairie</b> à la sortie du parcours, un <b>café</b> avec terrasse dans la cour intérieure, un <b>vestiaire gratuit</b> et le Wi-Fi libre dans tout le bâtiment.",
+    next: ["Horaires","Collections","Contact"]
+  },
+  {
+    id: "photo",
+    keywords: ["photo","photographier","filmer","flash","video","appareil","selfie"],
+    answer: () => "La photographie est autorisée <b>sans flash</b> et pour un usage privé dans les collections permanentes. Elle peut être limitée dans certaines expositions temporaires (indiquée à l'entrée). Trépieds et perches à selfie sont interdits.",
+    next: ["Collections","Expositions","Contact"]
+  },
+  {
+    id: "contact",
+    keywords: ["contact","telephone","appeler","mail","email","joindre","parler","humain","renseignement","ecrire","site","internet"],
+    answer: () => `Vous pouvez nous joindre :<ul><li>📞 ${CONFIG.phone}</li><li>✉️ <a href="mailto:${CONFIG.email}">${CONFIG.email}</a></li><li>🌐 <a href="${CONFIG.website}" target="_blank" rel="noopener">${CONFIG.website.replace("https://","")}</a></li><li>📍 ${CONFIG.address}</li></ul>`,
+    next: ["Horaires","Tarifs","Comment venir"]
+  },
+  {
+    id: "thanks",
+    keywords: ["merci","parfait","super","genial","top","bravo","excellent"],
+    answer: () => "Avec plaisir ! 😊 N'hésitez pas si vous avez d'autres questions. Bonne visite au musée !",
+    next: ["Horaires","Expositions"]
+  },
+  {
+    id: "bye",
+    keywords: ["au revoir","bye","a bientot","adieu","ciao"],
+    answer: () => "Au revoir et à bientôt au musée ! 👋",
+    next: []
+  }
+];
+
+// Libellés des suggestions → intent
+const CHIP_MAP = {
+  "Horaires": "hours", "Tarifs": "prices", "Comment venir": "access", "Collections": "collections",
+  "Expositions": "exhibitions", "Visites guidées": "tours", "Enfants": "kids", "Accessibilité": "accessibility",
+  "Contact": "contact"
+};
+const START_CHIPS = ["Horaires","Tarifs","Comment venir","Collections","Expositions","Visites guidées","Enfants","Accessibilité"];
+
+/* ============================================================
+   MOTEUR DE RECONNAISSANCE
+   ============================================================ */
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s']/g, " ").replace(/\s+/g, " ").trim();
+
+function findIntent(text) {
+  const t = " " + norm(text) + " ";
+  let best = null, bestScore = 0;
+  for (const intent of INTENTS) {
+    let score = 0;
+    for (const kw of intent.keywords) {
+      const k = norm(kw);
+      if (k.includes(" ")) { if (t.includes(k)) score += 3; }                 // expression
+      else if (t.includes(" " + k + " ")) score += 2;                        // mot exact
+      else if (k.length >= 5 && t.includes(" " + k.slice(0, -1))) score += 1; // radical (pluriels…)
+    }
+    if (score > bestScore) { bestScore = score; best = intent; }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+/* ============================================================
+   INTERFACE
+   ============================================================ */
+const chat = document.getElementById("chat");
+const chips = document.getElementById("chips");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+document.getElementById("museumName").textContent = CONFIG.name;
+document.title = "Assistant · " + CONFIG.name;
+
+function refreshStatus() {
+  const s = openStatus(), el = document.getElementById("status");
+  el.textContent = s.text;
+  el.className = "status " + (s.open ? "open" : "closed");
+}
+refreshStatus(); setInterval(refreshStatus, 60000);
+
+function addMsg(html, who) {
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  if (who === "user") div.textContent = html; else div.innerHTML = html;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function setChips(labels) {
+  chips.innerHTML = "";
+  labels.forEach(label => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = label;
+    b.onclick = () => handle(label);
+    chips.appendChild(b);
+  });
+}
+
+let busy = false;
+function handle(text) {
+  text = text.trim();
+  if (!text || busy) return;
+  busy = true;
+  addMsg(text, "user");
+  setChips([]);
+
+  const typing = document.createElement("div");
+  typing.className = "msg bot typing";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+
+  const intent = (CHIP_MAP[text] ? INTENTS.find(i => i.id === CHIP_MAP[text]) : null) || findIntent(text);
+  setTimeout(() => {
+    typing.remove();
+    if (intent) {
+      addMsg(intent.answer(), "bot");
+      setChips(intent.next);
+    } else {
+      addMsg(`Je n'ai pas bien compris votre question 🤔. Je peux vous aider sur les horaires, tarifs, accès, collections, expositions ou visites guidées. Pour toute autre demande : ${CONFIG.phone}.`, "bot");
+      setChips(START_CHIPS);
+    }
+    busy = false;
+    input.focus();
+  }, 450 + Math.random() * 400);
+}
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const v = input.value;
+  input.value = "";
+  handle(v);
+});
+
+// Message d'accueil
+addMsg(`Bonjour et bienvenue au <b>${CONFIG.name}</b> ! 🏛<br>Je suis votre assistant virtuel. Que souhaitez-vous savoir ?`, "bot");
+setChips(START_CHIPS);
+input.focus();
+</script>
+</body>
+</html>
