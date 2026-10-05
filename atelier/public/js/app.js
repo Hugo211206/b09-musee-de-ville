@@ -9,6 +9,9 @@ suggestions.addEventListener('click', (event) => {
     return;
   }
   message.value = bouton.textContent.trim();
+  message.focus();
+  message.setSelectionRange(message.value.length, message.value.length);
+  status.textContent = 'Question copiée : modifiez-la ou envoyez-la.';
 });
 
 form.addEventListener('submit', (event) => {
