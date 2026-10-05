@@ -249,8 +249,12 @@ Pour l'adapter à ton musée : tout le contenu est dans le tableau knowledge, da
 ### J1-10 · 🧪 Épreuve de l'explication — [fiche](checkpoints/J1-10-epreuve-explication.md)
 
 - [ ] Validé
-- Preuve (`npm test` vert avec cinq tests dont ma limite, commit de sauvegarde, remise faite) :
+- Preuve (`npm test` vert avec cinq tests dont ma limite, commit de sauvegarde, remise faite) : `atelier/tests/brain.test.js`, 8 tests de `brain.js` (vide, espaces, `'  salut  '`, 100 passe, 101 refusé, SALUT = salut, « horaires » et « tarifs » ≠ repli) ; `npm test` : 17 tests, 17 verts ; commit « J1 : Cap Web répond » ; remise : ✏️ À FAIRE.
 - Le test rouge : son nom, son message exact, et ce qu'il m'a appris :
+  - Cassé exprès : `const LONGUEUR_MAX = 100;` → `110` dans `brain.js` (ligne 1).
+  - Test rouge : `refuse 101 caractères` (`tests/brain.test.js:25`).
+  - Message exact : `AssertionError [ERR_ASSERTION]: Expected values to be strictly equal: true !== false`.
+  - Ce que ça m'apprend : le test de la limite vérifie vraiment la limite. Avec 110, un message de 101 caractères est accepté (`true`) alors que le test attend un refus (`false`). Réparé avec `git restore`, de nouveau 17 verts.
 - Épreuve de l'explication, éditeur fermé :
   - Ce que je n'ai pas su expliquer :
   - Ce que mon binôme n'a pas su expliquer :
