@@ -4,3 +4,4 @@ main { max-width: 48rem; margin-inline: auto; }
 #message { width: 100%; min-height: 4rem; font: inherit; }
 #messages { list-style: none; padding: 0; margin-block: 1rem; }
 #status { min-height: 1.5em; }
+#messages li { overflow-wrap: break-word; word-break: break-word; }
